@@ -1,0 +1,193 @@
+﻿body {
+    margin: 0;
+    padding: 0;
+    line-height: 1.5;
+    background-color: rgb(255, 255, 255);
+    text-align: left;
+    font-size: 1.5rem;
+    border-radius: 5%;
+    color: rgb(40, 40, 40);
+}
+
+div#pagebody {
+    font-family: 'Segoe UI', Helvetica, sans-serif;
+    width: 98vw;
+    min-height: 98vh;
+    margin: 0 auto;
+    text-align: left;
+    overflow: auto;
+}
+
+/*============================================================
+Header
+============================================================*/
+
+.header {
+    z-index: 2;
+    background: black;
+    /*position: fixed;*/
+    top: 0;
+    left: 0;
+    height: auto;
+    padding: 8px;
+    border-bottom: 1px solid #888;
+    width: 100%;
+    font-size:1.3em;
+    color:rgb(240,240,240);
+} 
+
+/*.header, div#main_contents {
+    margin: auto;
+}*/
+
+.header {
+    text-align: center;
+    display: flex;
+    height: auto; 10vh
+
+}
+
+div#main_contents {
+    margin: 0px 0px 0px 0px;
+}
+
+
+fieldset {
+    border-width: 2px;
+    color: rgb(40, 40, 40);
+    border-color: silver;
+    border-style: groove;
+    padding: 3px 5px;
+    margin-bottom: 5px;
+}
+
+legend, legend.inner {
+    color: rgb(40, 40, 40);
+    font-size: 1.2em;
+    width: auto;
+    border-bottom: none;
+    padding: 0 5px 0 5px;
+    margin-bottom: 0px;
+}
+
+legend{
+    background-color:transparent;
+}
+
+legend.inner {
+    font-size:1.1em;
+}
+
+div.innerField {
+    margin: 0px 5px 0px 5px;
+}
+
+div.itemBody {
+    padding: 0px 0px 0px 5px;
+    font-weight: normal;
+    text-align: left;
+    margin-bottom: 5px;
+}
+
+select#DeviceList, input#newDeviceId, input#newModelId {
+    width: 98%;
+    height: 2.0em;
+    padding: 0px 5px 0px 5px;
+    margin:0;
+}
+
+div.modal-dialog {
+    font-size: 1.2em;
+}
+
+div.model-body {
+    text-align: left;
+}
+
+div.model-footer {
+    text-align: right;
+}
+
+input#newDeviceId, input#newModelId {
+    margin-bottom: 10px;
+    font-size: 1.2em;
+}
+
+button {
+    margin: 3px 0px 3px 0px;
+    border:0;
+    background-color:transparent;
+    color: rgb(80,80,80);
+}
+
+button:hover {
+
+    text-decoration: none;
+    background-color: rgb(220, 220, 220);
+}
+
+button:focus {
+    outline: 0;
+}
+
+button:disabled:hover,
+button:disabled:focus,
+button:disabled:hover,
+button:disabled {
+    color: rgb(220, 220, 220);
+    pointer-events: none;
+}
+
+td, table {
+/*    border: solid;
+    border-width: 1px;
+    border-color:yellow;*/
+}
+
+table {
+    border-spacing:2px;
+}
+
+i {
+    padding-right:0.3em;
+}
+
+.container {
+    display: table;
+    width: auto;
+    text-align:left;
+    margin:0;
+    padding:0px;
+    height:auto;
+}
+
+.column {
+    display: table-cell;
+    width: auto;
+    height: 2.1em;
+}
+
+.row {
+    display: table-row;
+}
+
+.EventSection {
+    display: table;
+    width: auto;
+    text-align: left;
+    margin: 0;
+    padding: 0px;
+}
+
+.loginLogout {
+    /*position: absolute;*/
+    top: 6px;
+    right: 0;
+}
+
+.rightSide {
+    /*position: absolute;*/
+    top: 0;
+    right: 0;
+    margin-right: 40px;
+} 

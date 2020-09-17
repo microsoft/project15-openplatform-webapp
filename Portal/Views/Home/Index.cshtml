@@ -1,0 +1,841 @@
+﻿@model Portal.Models.HomeViewModel
+@{
+    ViewData["Title"] = "Solution Template Demo";
+}
+<div id="pagebody">
+    @*<div class="header" style="font-size: 200%;">
+        <p style="float: left;margin: auto;align-items: stretch;">
+            <strong>Azure IoT Hub : @ViewData["IoTHubName"]</strong>
+        </p>
+    </div>*@
+    <div style="top: 0; width: 100%;">
+
+    </div>
+
+    <div class="modal fade" id="ModalCreateDevice" role="dialog" style="">
+        <div class="modal-dialog err-pop" style="width: 40vw;background-color: rgb(242, 242,242);">
+            <div class="modal-content" id="NewDeviceModal">
+                <div class="header" style="text-align: center; margin: auto;align-items: stretch;display: flow-root">
+                    <strong>Add a Device to IoT Hub</strong>
+                </div>
+                <div class="modal-body">
+                    <textares>A case-sensitive string (up to 128 characters long) of alphanumeric characters plus certain special characters.</textares>
+                    <br>
+                    <textares>- . + % _ # * ? ! ( ) , : = &amp; $ '</textares>
+                </div>
+                <div class="modal-body">
+                    @using (Html.BeginForm("AddDevice", "IoTHub", FormMethod.Post, new { @id = "NewDeviceForm" }))
+                    {
+                        @Html.TextBoxFor(m => Model.newDeviceId, new
+                        {
+                            @class = "form-control input-md",
+                            @id = "newDeviceId",
+                            placeholder = "Enter new device ID",
+                            Required = "required"
+                        })
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btnAddDevice" style="min-width:30%;padding:3.5px;"><i class="fas fa-plus"></i>Add</button>
+                    <button type="button" id="DivClose" style="min-width:30%;padding:3.5px;" data-dismiss="modal"><i class="fas fa-times"></i>Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="ModalSetModelId" role="dialog" style="">
+        <div class="modal-dialog err-pop" style="width: 40vw;background-color: rgb(242, 242,242);">
+            <div class="modal-content" id="ModelIdModal">
+                <div class="header" style="text-align: center;margin: auto;align-items: stretch;display: flow-root">
+                    <strong>Set Model ID</strong>
+                </div>
+                <div class="modal-body">
+                    @using (Html.BeginForm("SetModel", "IoTHub", FormMethod.Post, new { @id = "NewModelIdForm" }))
+                    {
+                        @Html.TextBoxFor(m => Model.newModelId, new
+                        {
+                            @class = "form-control input-md",
+                                @id = "newModelId",
+                                placeholder = "Enter Model ID",
+                            Required = "required"
+                        })
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btnSetModel" style="width:45%;padding:3.5px;"><i class="fas fa-plus"></i>Set Model ID</button>
+                    <button type="button" id="DivClose" style="width:45%;padding:3.5px;" data-dismiss="modal"><i class="fas fa-times"></i>Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="ModalDeviceTwin" role="dialog" style="">
+        <div class="modal-dialog err-pop" style="width:50vw;background-color: rgb(242, 242,242);">
+            <div class="modal-content" id="DeviceTwinModal">
+                <div class="header" style="text-align: center; margin: auto;align-items: stretch;display: flow-root">
+                    <strong>Device Twin</strong>
+                </div>
+                <div class="modal-body">
+                    <pre><code id="DeviceTwinContent" style="font-size:1.5rem"></code></pre>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="DivClose" style="width:45%;padding:3.5px;" data-dismiss="modal"><i class="fas fa-times"></i>Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="main_contents" style="height:auto;display:block">
+        <div style="display:flex">
+            <div class="column" style="width:50%;margin-right:1px;height:auto">
+                <fieldset style="height:100%;">
+                    <legend><strong>Time Series Insights</strong></legend>
+                    <div id="tsiNoSP" style="display: none; text-align:center; position:relative;top:30%;z-index:1;">
+                        <div id="tsiNoSpMsg"></div>
+                        <a href="https://www.github.com/microsoft/project15-dev/" target="_blank" rel="noopener noreferrer">How to set up Time Series Insights</a>
+                    </div>
+                    <div id="tsiChart" style="display:none; height:2em;">
+                        <div id="tsiLineChart" style="position:relative;width: 100%;height:calc(30vh - 2em); margin: 0px;"></div>
+                        <button type="button" id="btnRefreshTsi"><i class="fas fa-sync"></i>Refresh</button>
+                    </div>
+                </fieldset>
+            </div>
+            <div class="column" style="width:50%;margin-left:1px;height:auto">
+                <fieldset style="height: 100%;">
+                    <legend><strong>Azure Map</strong></legend>
+                    <div id="map-id" class="container" style="width:100%;height:30vh;margin-bottom:0"></div>
+                </fieldset>
+            </div>
+        </div>
+
+        <div>
+            <fieldset>
+                <legend><strong>Device Administration</strong></legend>
+                <div class="container">
+                    <div class="column">
+                        <fieldset>
+                            <legend class="inner"><strong>Devices</strong></legend>
+                            <div class="container">
+                                <div class="row">
+                                    <div class="column">
+                                        <button type="button" id="btnAddDevicePopup"><i class="fas fa-plus"></i>Add Device</button>
+                                        <button type="button" id="btnDeleteDevice"><i class="far fa-trash-alt"></i>Delete Device</button>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="column" style="padding-left:5px">
+                                        @Html.DropDownListFor(model => Model.deviceId, new SelectList(Model.deviceList, "Value", "Text"), new { @id = "DeviceList" })
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="column" style="padding-left:5px">
+                                        &nbsp;
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="column">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="column">
+                                        &nbsp;
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+                    <div class="column" style="padding-left:5px;">
+                        <fieldset style="height:100%;">
+                            <legend class="inner"><strong>Device Information</strong></legend>
+                            <div class="container">
+                                <div class="row">
+                                    <div class="column" style="padding-right:0.5em;padding-left:5px">
+                                        Connection State
+                                    </div>
+                                    <div class="column" id="tdConnectionStatus" style="width:28em;">
+                                        &nbsp;
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="column" style="padding-right:0.5em;padding-left:5px">
+                                        Status
+                                    </div>
+                                    <div class="column" id="tdState">
+                                        &nbsp;
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="column" style="padding-right:0.5em;padding-left:5px">
+                                        IoT PnP Model ID
+                                    </div>
+                                    <div class="column" id="tdModelId">
+                                        &nbsp;
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="column" style="padding-right:0.5em;padding-left:5px">
+                                    </div>
+                                    <div class="column" id="">
+                                        &nbsp;
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="column" style="padding-right:0.5em;padding-left:5px">
+                                    </div>
+                                    <div class="column" id="">
+                                        &nbsp;
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+                    <div class="column" style="padding-left:5px;">
+                        <fieldset style="height:100%;">
+                            <legend class="inner">Device Operation</legend>
+                            <div class="container">
+                                <div class="row">
+                                    <div class="column" style="padding-right:0.5em;">
+                                        <button type="button" id="btnConnectionStringCopy"><i class="fas fa-info-circle" style="width:1.5em"></i>Copy Connection String</button>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="column" style="padding-right:0.5em;">
+                                        <button type="button" id="btnPrimaryKeyCopy"><i class="fas fa-info-circle" style="width:1.5em"></i>Copy Primary Key</button>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="column" style="padding-right:0.5em;">
+                                        <button type="button" id="btnSecondaryKeyCopy"><i class="fas fa-info-circle" style="width:1.5em"></i>Copy Secondary Key</button>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="column" style="padding-right:0.5em;">
+                                        <button type="button" id="btnDeviceTwin"><i class="far fa-file-code" style="width:1.5em"></i>Device Twin</button>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="column" style="padding-right:0.5em;">
+                                        &nbsp;
+                                    </div>
+                                </div>
+
+                            </div>
+                        </fieldset>
+                    </div>
+                    <div class="column" style="padding-left:5px;">
+                        <fieldset style="height:100%;">
+                            <legend class="inner">Simulator</legend>
+                            <div class="container">
+                                <div class="row">
+                                    <div class="column" style="padding-right:0.5em;">
+                                        <button type="button" id="btnSetModelPopup"><i class="far fa-envelope" style="width:1.5em"></i>Set Model ID</button>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="column">
+                                        <button type="button" id="btnConnect"><i class="fa fa-link" style="width: 1.5em"></i>Connect</button>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="column">
+                                        <button type="button" id="btnTelemetry"><i class="far fa-envelope" style="width:1.5em"></i>Send a message</button>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="column">
+                                        &nbsp;
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="column" style="padding-right:0.5em;">
+                                        <a href="https://azure-samples.github.io/raspberry-pi-web-simulator/" target="_blank">Raspberry Pi Simulator</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+        <div>
+            <fieldset>
+                <legend><strong>Device Telemetry and Events</strong></legend>
+                <div class="container">
+                    <div class="EventSection">
+                        <button type="button" id="clear-events"><i class="far fa-trash-alt"></i>Clear Events</button>
+                        <table id="device-events" class="table table-striped">
+                            <thead>
+                            <th>&nbsp;</th>
+                            <th>Event Time(UTC)</th>
+                            <th>Device ID</th>
+                            <th>Model ID</th>
+                            <th>Event Type</th>
+                            <th>Event Source</th>
+                            </thead>
+                            <tbody id="device-event-details"></ tbody >
+                        </table>
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+    </div>
+
+
+    <script id="event-template" type="text/x-handlebars-template">
+        <tr data-toggle="collapse" data-target="#event-{{eventId}}" class="accordian-toggle">
+            <td>
+                <button class="btn btn-primary btn-xs">
+                    <i class="fas fa-angle-double-down"></i>
+                </button>
+            </td>
+            <td>{{eventTime}}</td>
+            <td>{{eventDeviceId}}</td>
+            <td>{{eventModelId}}</td>
+            <td>{{eventSource}}</td>
+            <td>{{eventType}}</td>
+        </tr>
+        <tr class="hiddenRow collapse" id="event-{{eventId}}">
+            <td colspan="12">
+                <div class="accordian-body">
+                    <pre><code class="nohighlight">{{eventData}}</code></pre>
+                </div>
+            </td>
+        </tr>
+    </script>
+
+    <script>
+
+
+
+    </script>
+
+    @section scripts
+    {
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0/handlebars.js"></script>
+
+        <script type="text/javascript">
+
+            var hubConnection;
+
+            var temperatureTsx = '$event.' + '@ViewData["temperature"]';
+            var humidityTsx = '$event.' + '@ViewData["humidity"]';
+
+            var connectionString = "";
+            var deviceKeyPrimary = "";
+            var deviceKeySecondary = "";
+            var deviceTwinString = "";
+
+            var tsiToken = "";
+            var tsiClient
+            var lineChart = null;
+
+            $("#btnTsiLogout").click(function () {
+                console.log("TSI Logout")
+                authContext.logOut();
+            })
+
+            $("#btnTsiLogin").click(function () {
+                console.log("TSI Login")
+                authContext.login();
+            })
+
+            //
+            // Button click event handlers
+            //
+            $("#btnRefreshTsi").click(function () {
+                var targetDeviceId = $("#DeviceList option:selected").text();
+                runTsq(targetDeviceId)
+            })
+
+            $("#btnAddDevicePopup").click(function () {
+                $('#ModalCreateDevice').modal('show');
+            })
+
+            $("#btnConnectionStringCopy").click(function () {
+                navigator.clipboard.writeText(connectionString);
+            })
+
+            $("#btnPrimaryKeyCopy").click(function () {
+                console.log("Primary" + deviceKeyPrimary);
+                navigator.clipboard.writeText(deviceKeyPrimary);
+            })
+
+            $("#btnSecondaryKeyCopy").click(function () {
+                console.log("Secondary" + deviceKeySecondary);
+                navigator.clipboard.writeText(deviceKeySecondary);
+            })
+
+            //
+            // Retrieves Device Twin
+            //
+            $("#btnDeviceTwin").click(function () {
+                var targetDeviceId = $("#DeviceList option:selected").text();
+                console.log("Get Twin for : " + connectionString);
+
+                if (targetDeviceId.length > 0) {
+                    $.ajax({
+                    type: "GET",
+                        url: '@Url.Action("GetTwin", "IoTHub")',
+                        data: { deviceId: targetDeviceId},
+                        success: function (response) {
+                            document.getElementById('DeviceTwinContent').innerHTML = response;
+                            $('#ModalDeviceTwin').modal('show');
+                        },
+                        error: function(req, status, error) {
+                            alert("Error " + status);
+                        }
+                    });
+                };
+
+
+            })
+
+            //
+            // Gets list of devices from IoT Hub and fill the dropdown list
+            //
+            $('#DeviceList').change(function () {
+                var targetDeviceId = $("#DeviceList option:selected").text();
+                if (targetDeviceId.length > 0) {
+                    console.log("Selected " + targetDeviceId);
+                    getDeviceInfo(targetDeviceId);
+                    runTsq(targetDeviceId);
+                } else {
+                    enableDisableButtons(true);
+                    clearDeviceInfo();
+                }
+            });
+
+            //
+            // Sets Model ID to the selected device
+            //
+            $('#btnSetModel').click(function () {
+                var targetDeviceId = $("#DeviceList option:selected").text();
+                var modelId = $("#newModelId").val();
+
+                if (connectionString.length > 0 && modelId.length > 0) {
+                    console.log("Setting Model ID :" + targetDeviceId + " Model : " + modelId);
+
+                    $.ajax({
+                        type: "POST",
+                        url: '@Url.Action("SetModelId", "IoTHub")',
+                        data: { connectionString: connectionString, modelId: modelId },
+                        success: function(response) {
+                            getDeviceInfo(targetDeviceId);
+                        },
+                        error: function(req, status, error) {
+                            alert("Error " + status);
+                        }
+                    });
+                    $('#ModalSetModelId').modal('hide');
+                };
+            });
+
+            //
+            // Adds a new IoT Device to IoT Hub
+            //
+            $('#btnAddDevice').click(function () {
+                var newDevice = $('#newDeviceId').val();
+
+                if (newDevice.length > 0) {
+                    console.log("Add Device " + newDevice);
+                    $.ajax({
+                        type: "POST",
+                        url: '@Url.Action("AddDevice", "IoTHub")',
+                        data: { deviceId: newDevice },
+                        success: function(response) {
+                            var newOption = "<option value='" + newDevice + "'>" + newDevice + "</option>";
+                            $(newOption).insertBefore($("#DeviceList option:last"));
+                            $("#DeviceList").val(newDevice);
+                            getDeviceInfo(newDevice);
+                        },
+                        error: function(req, status, error) {
+                            alert("Error " + status);
+                        }
+                    });
+                    $('#ModalCreateDevice').modal('hide');
+                };
+            });
+
+            //
+            // Deletes an IoT device from IoT Hub
+            //
+            $('#btnDeleteDevice').click(function () {
+                var targetDeviceId = $("#DeviceList option:selected").text();
+
+                if (targetDeviceId.length > 0) {
+
+                    console.log("Deleting " + targetDeviceId);
+
+                    $.ajax({
+                        type: "DELETE",
+                        url: '@Url.Action("DeleteDevice", "IoTHub")',
+                        data: { deviceId: targetDeviceId },
+                        success: function (response) {
+                            //alert("Success " + JSON.stringify(response));
+                            $("#DeviceList option:selected").remove();
+                            enableDisableButtons(true);
+                            clearDeviceInfo();
+                        },
+                        error: function (req, status, error) {
+                            alert("Error " + status);
+                        }
+                    });
+                }
+            });
+
+            //
+            // Web Client Simulator
+            //
+            $('#btnConnect').click(function () {
+                var targetDeviceId = $("#DeviceList option:selected").text();
+                var modelId = $("#tdModelId").text();
+
+                if (targetDeviceId.length > 0 && connectionString.length > 0) {
+                    console.log("Connect Device " + targetDeviceId + " Model : " + modelId);
+                    $.ajax({
+                    type: "POST",
+                        url: '@Url.Action("ConnectDevice", "IoTHub")',
+                        data: { connectionString: connectionString, modelId: modelId},
+                        success: function (response) {
+                            //alert(response)
+                            getDeviceInfo(targetDeviceId);
+                        },
+                        error: function(req, status, error) {
+                            alert("Error " + status);
+                        }
+                    });
+                };
+            });
+
+
+            //
+            // Send a dump telemetry data
+            //
+            $('#btnTelemetry').click(function () {
+                var targetDeviceId = $("#DeviceList option:selected").text();
+                var modelId = $("#tdModelId").text();
+
+                if (targetDeviceId.length > 0) {
+                    console.log("Sending Telemetry from " + targetDeviceId + " Model : " + modelId);
+                    $.ajax({
+                    type: "POST",
+                        url: '@Url.Action("SendTelemetry", "IoTHub")',
+                        data: { connectionString: connectionString, modelId: modelId},
+                        success: function (response) {
+                            //alert(response)
+                            getDeviceInfo(targetDeviceId);
+                        },
+                        error: function(req, status, error) {
+                            alert("Error " + status);
+                        }
+                    });
+                };
+            });
+
+
+            //
+            // Gets device information.  Connection String, Model ID, Primary/Secondary Keys, and connect/disconnect status
+            //
+            var getDeviceInfo = function (deviceId) {
+
+                $.ajax({
+                    type: "GET",
+                    url: '@Url.Action("GetDevice", "IoTHub")',
+                    data: { deviceId: deviceId },
+                    success: function (response) {
+                        document.getElementById('tdConnectionStatus').innerHTML = response.connectionState;
+                        if (response.connectionState == "Connected") {
+                            btnConnect.innerHTML = '<i class="fa fa-unlink" style="width: 1.5em"></i>Disconnect'
+                        } else {
+                            btnConnect.innerHTML = '<i class="fa fa-link" style="width: 1.5em"></i>Connect'
+                        }
+                        document.getElementById('tdState').innerHTML = response.status;
+                        deviceKeyPrimary = response.primaryKey;
+                        deviceKeySecondary = response.secondaryKey;
+                        connectionString = "HostName=" + '@ViewData["IoTHubName"]' + ";DeviceId=" + response.deviceId + ";SharedAccessKey=" + response.primaryKey;
+                        document.getElementById('tdModelId').innerHTML = response.modelId;
+                        deviceTwinString = response;
+                        enableDisableButtons(false);
+                        return true;
+                    },
+                    error: function (req, status, error) {
+                        alert("Error " + status);
+                        return false;
+                    }
+                });
+            }
+
+            //
+            // Clears UI components when a device is de-selected
+            //
+            var clearDeviceInfo = function () {
+                document.getElementById('tdConnectionStatus').innerHTML = "&nbsp;"
+                document.getElementById("btnConnect").innerHTML = '<i class="fa fa-link" style="width: 1.5em"></i>Connect'
+                document.getElementById('tdState').innerHTML = "&nbsp;"
+                document.getElementById('tdModelId').innerHTML = "&nbsp;"
+                deviceKeyPrimary = ""
+                deviceKeySecondary = ""
+                connectionString = "";
+            }
+
+            //
+            // Enable/disable buttons
+            //
+            var enableDisableButtons = function (disableButton) {
+
+                document.getElementById("btnDeleteDevice").disabled = disableButton;
+
+                if (disableButton == false && connectionString.length > 0) {
+                    document.getElementById("btnConnectionStringCopy").disabled = disableButton;
+                    document.getElementById("btnPrimaryKeyCopy").disabled = disableButton;
+                    document.getElementById("btnSecondaryKeyCopy").disabled = disableButton;
+                    document.getElementById("btnConnect").disabled = disableButton;
+                    document.getElementById("btnTelemetry").disabled = disableButton;
+                } else {
+                    document.getElementById("btnConnectionStringCopy").disabled = disableButton;
+                    document.getElementById("btnPrimaryKeyCopy").disabled = disableButton;
+                    document.getElementById("btnSecondaryKeyCopy").disabled = disableButton;
+                    document.getElementById("btnConnect").disabled = disableButton;
+                    document.getElementById("btnTelemetry").disabled = disableButton;
+                }
+                document.getElementById("btnSetModelPopup").disabled = disableButton;
+                document.getElementById("btnDeviceTwin").disabled = disableButton;
+            }
+
+            //
+            // Clears device events (messages and events)
+            //
+            var clearEventData = function () {
+                $("#device-events").find("tr:gt(0)").remove();
+                $("#device-events").hide();
+            }
+
+            //
+            // Adds device events to the table
+            //
+            var addEvent = function (id, type, deviceId, modelId, source, time, data) {
+                var dataObj = JSON.parse(data);
+                var context = {
+                    eventTime: time,
+                    eventDeviceId: deviceId,
+                    eventModelId: modelId,
+                    eventType: type,
+                    eventSource: source,
+                    eventId: id,
+                    eventData: JSON.stringify(dataObj, undefined, 2)
+                };
+                var source = document.getElementById('event-template').innerHTML;
+                var template = Handlebars.compile(source);
+                var html = template(context);
+
+                $("#device-events").show();
+                $('#device-event-details').prepend(html);
+            }
+
+            var getTsiToken = function () {
+                console.log("Getting TSI Token");
+                document.getElementById('tsiNoSP').style.display = 'none';
+                $.ajax({
+                    type: "GET",
+                    url: '@Url.Action("GetTsiToken", "Tsi")',
+                    success: function (response) {
+                        tsiToken = response.toString();
+                        // console.log("GetTsiToken : " + tsiToken);
+                        if (tsiToken.length == 0) {
+                            document.getElementById('tsiNoSpMsg').textContent = "Please configure Time Series Insights";
+                            document.getElementById('tsiNoSP').style.display = "block";
+                            document.getElementById('tsiChart').style.display = "none";
+                        } else {
+                            document.getElementById('tsiChart').style.display = "block";
+                        }
+                    },
+                    error: function(req, status, error) {
+                        alert("GetTsiToken Error " + status);
+                        tsiToken = "";
+                        document.getElementById('tsiNoSpMsg').textContent = "Please configure Time Series Insights";
+                        document.getElementById('tsiNoSP').style.display = "block";
+                    }
+                });
+            }
+
+            var runTsq = function (deviceId) {
+
+                console.log("runTsq " + deviceId);
+                // create aggregate expressions, they are S1/S2 SKU query objects
+                var linechartTsqExpressions = [];
+
+                //Set a date range for the past 24 hours.
+                var endDate = new Date();
+                var startDate = new Date(endDate.valueOf() - 1000 * 60 * 5);
+
+                //https://github.com/microsoft/tsiclient/blob/b19d9f0078c8ed3104b9d664f05551664a5ae602/docs/UX.md#chart-options
+
+                linechartTsqExpressions.push(new tsiClient.ux.TsqExpression(
+                    { timeSeriesId: [deviceId] }, // instance json
+                    {
+                        Average_Temperature: {
+                            kind: 'numeric',
+                            value: { tsx: temperatureTsx },
+                            filter: null,
+                            aggregation: { tsx: 'avg($value)' }
+                        }
+                    },
+                    { from: startDate, to: endDate, bucketSize: '10S' }, // search span
+                    { color: 'Red', alias: 'Average_Temperature', includeDots: true, includeEnvelope: true }
+                ));
+
+
+                linechartTsqExpressions.push(new tsiClient.ux.TsqExpression(
+                    { timeSeriesId: [deviceId] }, // instance json
+                    {
+                        Average_Humidity: {
+                            kind: 'numeric',
+                            value: { tsx: humidityTsx },
+                            filter: null,
+                            aggregation: { tsx: 'avg($value)' }
+                        }
+                    },
+                    { from: startDate, to: endDate, bucketSize: '10S' }, // search span
+                    { color: 'yellow', alias: 'Average_Humidity', includeDots: true}
+                ));
+
+                getTsiToken();
+
+                if (tsiToken.length > 0) {
+
+                    tsiClient.server.getTsqResults(tsiToken, `@ViewData["tsiUri"]`, linechartTsqExpressions.map(function (ae) { return ae.toTsq() })).then(function (result) {
+
+                        var transformedResult = tsiClient.ux.transformTsqResultsForVisualization(result, linechartTsqExpressions);
+                        var temps = transformedResult[0].Average_Temperature[''];
+                        var humidity = transformedResult[1].Average_Humidity[''];
+                        var timestamps = Object.keys(humidity);
+
+                        //Create mock positions for each timestamp since this device doesn't have position information.
+                        for (var i = 0; i < timestamps.length; i++) {
+                            var timestamp = timestamps[i];
+                            t = temps[timestamp].Average_Temperature;
+                            h = humidity[timestamp].Average_Humidity;
+
+                            //If there is a temperature and humidity value, add a data point to the map.
+                            if (t !== null && h !== null) {
+                                var timestamp = timestamps[i];
+                            }
+                        }
+
+                        //Create the line chart.
+                        if (lineChart == null) {
+                            lineChart = new tsiClient.ux.LineChart(document.getElementById('tsiLineChart'));
+                        }
+
+                        lineChart.render(transformedResult, {
+                            theme: 'dark', grid: true, tooltip: true, legend: 'compact', offset: 'Local',
+                        }, linechartTsqExpressions);
+                    });
+                }
+
+            };
+
+            //
+            // Initialization on page load
+            //
+            var initialize = function () {
+
+                // Initialize Authentication for TSI
+                getTsiToken();
+
+                tsiClient = new TsiClient();
+
+                // Initialize Azure Map
+                var map = new atlas.Map('map-id', {
+                    center: [-122.1385, 47.6449093],
+                    zoom: 16,
+                    language: 'en-US',
+                    showLogo: false,
+                    renderWorldCopies: true,
+                    view:"Auto",
+                    showBuildingModels: true,
+                    showFeedbackLink :false,
+                    style: "satellite_road_labels",
+                    authOptions: {
+                        authType: 'subscriptionKey',
+                        subscriptionKey: `@ViewData["mapKey"]`
+                    }
+                });
+
+                map.controls.add([
+                    new atlas.control.ZoomControl(),
+                    new atlas.control.CompassControl(),
+                    new atlas.control.PitchControl(),
+                    new atlas.control.StyleControl()
+                ], {
+                    position: "top-left"
+                });
+
+                var clearEvents = document.getElementById('clear-events');
+                    clearEvents.addEventListener('click', function () {
+                        clearEventData();
+                });
+
+                // SignalR
+                hubConnection = new signalR.HubConnectionBuilder()
+                    .withUrl("telemetryhub")
+                    .configureLogging(signalR.LogLevel.Information)
+                    .build();
+
+                hubConnection.start().catch(err => console.error(err.toString()));
+
+                hubConnection.on('SignalRTest', function (payload) {
+                    alert("SignalR Test : " + JSON.stringify(payload));
+                });
+
+                hubConnection.on('DeviceTelemetry', function (payload) {
+                    var jsonData = JSON.parse(payload);
+                    addEvent(jsonData.eventId, jsonData.eventType, jsonData.deviceId, jsonData.dtDataSchema, jsonData.eventSource, jsonData.eventTime, jsonData.data);
+                });
+
+                hubConnection.on('DeviceTwinChange', function (payload) {
+                    var jsonData = JSON.parse(payload)
+                    addEvent(jsonData.eventId, jsonData.eventType, jsonData.deviceId, jsonData.dtDataSchema, jsonData.eventSource, jsonData.eventTime, jsonData.data);
+                });
+
+                hubConnection.on('DigitalTwinChange', function (payload) {
+                    var jsonData = JSON.parse(payload)
+                    addEvent(jsonData.eventId, jsonData.eventType, jsonData.deviceId, jsonData.dtDataSchema, jsonData.eventSource, jsonData.eventTime, jsonData.data);
+                });
+
+                hubConnection.on('DeviceLifecycle', function (payload) {
+                    var jsonData = JSON.parse(payload)
+                    addEvent(jsonData.eventId, jsonData.eventType, jsonData.deviceId, jsonData.dtDataSchema, jsonData.eventSource, jsonData.eventTime, jsonData.data);
+                    console.log("DeviceLifecycle " + jsonData.eventSource);
+                    if (jsonData.eventSource == 'Microsoft.Devices.DeviceCreated') {
+                        Console.log("Device Added");
+                        var newOption = "<option value='" + jsonData.deviceId + "'>" + jsonData.deviceId + "</option>";
+                        $(newOption).insertBefore($("#DeviceList option:last"));
+                        $("#DeviceList").val(jsonData.deviceId);
+                    }
+                    else if (jsonData.eventSource == 'Microsoft.Devices.DeviceDeleted')
+                    {
+                        Console.log("Device Removed");
+                    }
+                });
+
+                hubConnection.on('EventGrid', function (payload) {
+                    var jsonData = JSON.parse(payload)
+                    addEvent(jsonData.eventId, jsonData.eventType, jsonData.deviceId, jsonData.dtDataSchema, jsonData.eventSource, jsonData.eventTime, jsonData.data);
+                    console.log("Event Grid " + jsonData.eventSource);
+                    if (jsonData.eventSource == 'Microsoft.Devices.DeviceCreated') {
+                        console.log("Device Added");
+                        var newOption = "<option value='" + jsonData.deviceId + "'>" + jsonData.deviceId + "</option>";
+                        $(newOption).insertBefore($("#DeviceList option:last"));
+                        $("#DeviceList").val(jsonData.deviceId);
+                    }
+                    else if (jsonData.eventSource == 'Microsoft.Devices.DeviceDeleted') {
+                        console.log("Device Removed");
+                    }
+                });
+
+                enableDisableButtons(true);
+            };
+        </script>
+    }
