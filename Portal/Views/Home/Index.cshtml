@@ -319,7 +319,7 @@
             var hubConnection;
 
             var temperatureTsx = '$event.' + '@ViewData["Temperature"]';
-            var humidityTsx = '$event.' + '@ViewData["Pressure"]';
+            var pressureTsx = '$event.' + '@ViewData["Pressure"]';
 
             var connectionString = "";
             var deviceKeyPrimary = "";
@@ -689,15 +689,15 @@
                 linechartTsqExpressions.push(new tsiClient.ux.TsqExpression(
                     { timeSeriesId: [deviceId] }, // instance json
                     {
-                        Average_Humidity: {
+                        Average_Pressure: {
                             kind: 'numeric',
-                            value: { tsx: humidityTsx },
+                            value: { tsx: pressureTsx },
                             filter: null,
                             aggregation: { tsx: 'avg($value)' }
                         }
                     },
                     { from: startDate, to: endDate, bucketSize: '10S' }, // search span
-                    { color: 'yellow', alias: 'Average_Humidity', includeDots: true}
+                    { color: 'yellow', alias: 'Average_Pressure', includeDots: true}
                 ));
 
                 getTsiToken();
@@ -708,16 +708,16 @@
 
                         var transformedResult = tsiClient.ux.transformTsqResultsForVisualization(result, linechartTsqExpressions);
                         var temps = transformedResult[0].Average_Temperature[''];
-                        var humidity = transformedResult[1].Average_Humidity[''];
-                        var timestamps = Object.keys(humidity);
+                        var pressure = transformedResult[1].Average_Pressure[''];
+                        var timestamps = Object.keys(pressure);
 
                         //Create mock positions for each timestamp since this device doesn't have position information.
                         for (var i = 0; i < timestamps.length; i++) {
                             var timestamp = timestamps[i];
                             t = temps[timestamp].Average_Temperature;
-                            h = humidity[timestamp].Average_Humidity;
+                            h = pressure[timestamp].Average_Pressure;
 
-                            //If there is a temperature and humidity value, add a data point to the map.
+                            //If there is a temperature and pressure value, add a data point to the map.
                             if (t !== null && h !== null) {
                                 var timestamp = timestamps[i];
                             }
