@@ -1,0 +1,35 @@
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
+name: Build and deploy ASP.Net Core app to Azure Web App - portal-z6xel
+
+on:
+  push:
+    branches:
+      - Demo-20201010
+
+jobs:
+  build-and-deploy:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@master
+
+    - name: Set up .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '3.1.102'
+
+    - name: Build with dotnet
+      run: dotnet build --configuration Release
+
+    - name: dotnet publish
+      run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp
+
+    - name: Deploy to Azure Web App
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: 'portal-z6xel'
+        slot-name: 'production'
+        publish-profile: ${{ secrets.AzureAppService_PublishProfile_dc8d7624e0294635aa5087c6da8abb13 }}
+        package: ${{env.DOTNET_ROOT}}/myapp 
