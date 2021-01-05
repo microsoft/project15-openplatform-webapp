@@ -1,0 +1,70 @@
+import { TooltipMeasureFormat } from "./Utils-6bcf72cd";
+import { Component } from "./Component-9318289b";
+import { ChartComponentData } from "./ChartComponentData-72034d1d";
+import EllipsisMenu from "./EllipsisMenu";
+import { Legend } from "./Legend-7f738756";
+declare function _exports(idsOption: any, options: any): {
+    setSizes: (newSizes: any) => void;
+    destroy: (preserveStyles: any, preserveGutter: any) => void;
+    getSizes?: undefined;
+    collapse?: undefined;
+    parent?: undefined;
+    pairs?: undefined;
+} | {
+    setSizes: (newSizes: any) => void;
+    getSizes: () => any;
+    collapse: (i: any) => void;
+    destroy: (preserveStyles: any, preserveGutter: any) => void;
+    parent: any;
+    pairs: any[];
+};
+declare class ChartComponent extends Component {
+    readonly MINWIDTH = 350;
+    protected MINHEIGHT: number;
+    readonly CONTROLSWIDTH = 200;
+    readonly GUTTERWIDTH = 6;
+    data: any;
+    aggregateExpressionOptions: any;
+    protected chartControlsPanel: any;
+    protected ellipsisContainer: any;
+    protected ellipsisMenu: EllipsisMenu;
+    protected legendObject: Legend;
+    protected width: number;
+    protected chartWidth: number;
+    protected svgSelection: any;
+    protected legendWidth: number;
+    draw: any;
+    chartComponentData: ChartComponentData;
+    chartMargins: any;
+    constructor(renderTarget: Element);
+    showGrid(): void;
+    gatedShowGrid(): void;
+    hideGrid(): void;
+    isGridVisible(): boolean;
+    protected drawEllipsisMenu(additionalEllipsisItems?: any[]): void;
+    downloadAsCSV: (isScatterPlot?: boolean) => void;
+    protected removeControlPanel(): void;
+    protected removeEllipsisMenu(): void;
+    protected getWidth(): number;
+    getVisibilityState(): any[];
+    protected ellipsisItemsExist(): boolean;
+    protected getDataType(aggKey: any): any;
+    protected getCDOFromAggKey(aggKey: any): any;
+    protected getFilteredMeasures(measureList: any, visibleMeasure: any, measureFormat: TooltipMeasureFormat, xyrMeasures?: any): any;
+    // to get alignment for data points between other types and linechart for tooltip formatting
+    protected convertToTimeValueFormat(d: any): {
+        aggregateKey: any;
+        splitBy: any;
+        aggregateName: any;
+        measures: {};
+    };
+    protected formatDate(date: any, shiftMillis: any): string;
+    protected tooltipFormat(d: any, text: any, measureFormat: TooltipMeasureFormat, xyrMeasures?: any): void;
+    protected getSVGWidth(): any;
+    protected getChartWidth(legendWidth?: number): number;
+    protected calcSVGWidth(): any;
+    protected setControlsPanelWidth(): void;
+    protected legendPostRenderProcess(legendState: string, chartElement: any, shouldSetControlsWidth: boolean, splitLegendOnDrag?: any): void;
+    protected splitLegendAndSVG(chartElement: any, onDrag?: () => void): void;
+}
+export { _exports as default, ChartComponent };

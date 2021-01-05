@@ -1,0 +1,1255 @@
+﻿@model OpenPlatform_WebPortal.Models.HomeView
+@{
+    ViewData["Title"] = "Project 15 Openplatform";
+}
+
+<div class="sidenav">
+
+    <!--------------------------------------------------
+    Device Selection
+    --------------------------------------------------->
+    <fieldset style="height:100%;">
+        <legend class="inner"><strong>Device Selection</strong></legend>
+        <div>
+            <label style="font-weight:500;">Select Device ID</label>
+        </div>
+        <div style="max-width:inherit;">
+            @Html.DropDownListFor(model => Model.deviceId, new SelectList(Model.deviceList, "Value", "Text"), new { @id = "DeviceList" })
+        </div>
+    </fieldset>
+
+    <!--------------------------------------------------
+    Device Information
+    --------------------------------------------------->
+    <fieldset style="height:100%;">
+        <legend class="inner"><strong>Device Information</strong></legend>
+        <table style="width:100%;">
+            <tr>
+                <td class="sidenavFas">
+                    <div class="sidenavTooltip">
+                        <i class="fas fa-info-circle"></i>
+                        <span class="tooltiptext">Status of device connection.  Device is either online (Connected) or offline (Disconnected).</span>
+                    </div>
+                </td>
+                <td>
+                    <label class="sidenavLabel">Connection State</label>
+                </td>
+                <td>
+                    <div id="deviceConnectionString">
+                        &nbsp;
+                    </div>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="sidenavFas">
+                    <div class="sidenavTooltip">
+                        <i class="fas fa-info-circle"></i>
+                        <span class="tooltiptext">Status of the device.  Either enabled or disabled.</span>
+                    </div>
+                </td>
+                <td>
+                    <label class="sidenavLabel">Device Status</label>
+                </td>
+                <td>
+                    <div id="deviceState">
+                        &nbsp;
+                    </div>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="sidenavFas">
+                    <div class="sidenavTooltip">
+                        <i class="fas fa-clipboard"></i>
+                        <span class="tooltiptext">Copy device connection string used to connect to IoT Hub.</span>
+                    </div>
+                </td>
+                <td colspan="2">
+                    <button type="button" id="btnIoTHubConnectionStringCopy" class="sidenavButton">Copy Connection String</button>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="sidenavFas">
+                    <div class="sidenavTooltip">
+                        <i class="fas fa-clipboard"></i>
+                        <span class="tooltiptext">Copy primary device key used to authenticate device with IoT Hub.</span>
+                    </div>
+                </td>
+                <td colspan="2">
+                    <button type="button" id="btnIoTHubPrimaryKeyCopy" class="sidenavButton">Copy Primary Key</button>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="sidenavFas">
+                    <div class="sidenavTooltip">
+                        <i class="fas fa-clipboard"></i>
+                        <span class="tooltiptext">Copy secondary device key used to authenticate device with IoT Hub.</span>
+                    </div>
+                </td>
+                <td colspan="2">
+                    <button type="button" id="btnIoTHubSecondaryKeyCopy" class="sidenavButton">Copy Secondary Key</button>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="sidenavFas">
+                    <div class="sidenavTooltip">
+                        <i class="fas fa-info-circle"></i>
+                        <span class="tooltiptext">IoT Plug and Play Digital Twin Model ID.</span>
+                    </div>
+                </td>
+                <td colspan="2">
+                    <label class="sidenavLabel">Device Model ID</label>
+                </td>
+            </tr>
+        </table>
+
+        <div id="deviceModelId" style="width:inherit;color:blue;overflow-x:scroll; white-space:nowrap;">
+            &nbsp;
+        </div>
+    </fieldset>
+
+    <!--------------------------------------------------
+    Device Operation
+    --------------------------------------------------->
+    <fieldset style="height:100%;">
+        <legend class="inner"><strong>Device Operation</strong></legend>
+        <table style="width:100%;">
+            <tr>
+                <td class="sidenavFas">
+                    <div class="sidenavTooltip">
+                        <i class="far fa-file-code"></i>
+                        <span class="tooltiptext">Display Device Twin contents.</span>
+                    </div>
+                </td>
+                <td>
+                    <button type="button" id="btnShowDeviceTwin" class="sidenavButton">Display Device Twin</button>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="sidenavFas">
+                    <div class="sidenavTooltip">
+                        <i class="far fa-file-code"></i>
+                        <span class="tooltiptext">Send command(s) to a device based on IoT Plug and Play device model.</span>
+                    </div>
+                </td>
+                <td>
+                    <button type="button" id="btnShowDeviceCommand" class="sidenavButton">Send commands to device</button>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="sidenavFas">
+                    <div class="sidenavTooltip">
+                        <i class="far fas fa-plus"></i>
+                        <span class="tooltiptext">Add a new device to IoT Hub.</span>
+                    </div>
+                </td>
+                <td>
+                    <button type="button" id="btnShowAddIoTHubDevicePopup" class="sidenavButton">Add device</button>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="sidenavFas">
+                    <div class="sidenavTooltip">
+                        <i class="far fa-trash-alt"></i>
+                        <span class="tooltiptext">Delete the selected device from IoT Hub.</span>
+                    </div>
+                </td>
+                <td>
+                    <button type="button" id="btnDeleteIoTHubDevice" class="sidenavButton">Delete device</button>
+                </td>
+            </tr>
+        </table>
+    </fieldset>
+
+    <!--------------------------------------------------
+    Device Provisioning
+    --------------------------------------------------->
+    <fieldset style="height:100%;">
+        <legend class="inner"><strong>Device Provisioning</strong></legend>
+        <div>
+            <label style="font-weight:500;">Individual Enrollment</label>
+        </div>
+        <div style="max-width:inherit;">
+            @Html.DropDownListFor(model => Model.registrationId, new SelectList(Model.enrollmentList, "Value", "Text"), new { @id = "EnrollmentList" })
+        </div>
+        <table style="width:100%;">
+            <tr>
+                <td class="sidenavFas">
+                    <div class="sidenavTooltip">
+                        <i class="fas fa-info-circle"></i>
+                        <span class="tooltiptext">Status of the enrollment.  Either enabled or disabled.</span>
+                    </div>
+                </td>
+                <td>
+                    <label class="sidenavLabel">Status</label>
+                </td>
+                <td>
+                    <div id="enrollmentStatus">
+                        &nbsp;
+                    </div>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="sidenavFas">
+                    <div class="sidenavTooltip">
+                        <i class="fas fa-clipboard"></i>
+                        <span class="tooltiptext">ID Scope of DPS</span>
+                    </div>
+                </td>
+                <td>
+                    <button type="button" id="btnDpsIdScopeCopy" class="sidenavButton">Copy ID Scope</button>
+                </td>
+                <td>
+                    <div>
+                        @ViewData["DpsIdScope"]
+                    </div>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="sidenavFas">
+                    <div class="sidenavTooltip">
+                        <i class="fas fa-clipboard"></i>
+                        <span class="tooltiptext">Copy primary key used to authenticate device with DPS.</span>
+                    </div>
+                </td>
+                <td colspan="2">
+                    <button type="button" id="btnDpsPrimaryKeyCopy" class="sidenavButton">Copy Primary Key</button>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="sidenavFas">
+                    <div class="sidenavTooltip">
+                        <i class="fas fa-clipboard"></i>
+                        <span class="tooltiptext">Copy secondary key used to authenticate device with DPS.</span>
+                    </div>
+                </td>
+                <td colspan="2">
+                    <button type="button" id="btnDpsSecondaryKeyCopy" class="sidenavButton">Copy Secondary Key</button>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="sidenavFas">
+                    <div class="sidenavTooltip">
+                        <i class="far fas fa-plus"></i>
+                        <span class="tooltiptext">Add a new individual enrollment to DPS.</span>
+                    </div>
+                </td>
+                <td>
+                    <button type="button" id="btnShowAddDpsEnrollmentPopup" class="sidenavButton">Add enrollment</button>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="sidenavFas">
+                    <div class="sidenavTooltip">
+                        <i class="far fa-trash-alt"></i>
+                        <span class="tooltiptext">Delete the selected enrollment from DPS.</span>
+                    </div>
+                </td>
+                <td>
+                    <button type="button" id="btnDeleteDpsEnrollment" class="sidenavButton">Delete enrollment</button>
+                </td>
+            </tr>
+        </table>
+    </fieldset>
+</div>
+
+<!--------------------------------------------------
+Main Page
+--------------------------------------------------->
+<div class="main">
+
+    <!--------------------------------------------------
+    Azure Map
+    --------------------------------------------------->
+    <fieldset>
+        <legend><strong>Azure Map</strong></legend>
+        <div style="width:auto;overflow:auto;">
+            <div id="map-id" style="width:100%;min-width: 1024px; min-height: 480px; width: inherit; height: 30vh;"></div>
+        </div>
+    </fieldset>
+
+    <!--------------------------------------------------
+    TSI Chart
+    --------------------------------------------------->
+    <fieldset>
+        <legend><strong>Time Series Insights</strong></legend>
+        <div>
+            <button type="button" id="btnRefreshTsi"><i class="fas fa-sync"></i>Refresh</button>
+            <label>Auto Refresh not enabled.  Please refresh manually.</label>
+        </div>
+        <div style="min-width: 1024px; width: inherit; margin-bottom:5px;">
+            <label style="font-weight:400">Select Telemetry</label>
+            <select id="telemetryList" name="telemetryList" style="padding-left:5px;min-width:10em;height:2.0em"></select>
+        </div>
+        <div id="tsiNonPnP" style="display: none; text-align:left; position:relative;top:30%;z-index:1;color:red;">
+            <div id="tsiNonPnPMsg">Non IoT Plug and Play Device.</div>
+            <div>Requires cusomization.</div>
+        </div>
+        <div id="tsiChart" style="min-width: 1024px; width: inherit;">
+            <div id="tsiLineChart" style="position:relative;width: 100%;height:calc(30vh - 2em); margin: 0px;"></div>
+        </div>
+    </fieldset>
+
+    <!--------------------------------------------------
+    Telemetry and Events.  Updated via SignalR
+    --------------------------------------------------->
+    <fieldset>
+        <legend><strong>Device Telemetry and Events</strong></legend>
+        <div class="container">
+            <div class="EventSection">
+                <button type="button" id="clear-events"><i class="far fa-trash-alt"></i>Clear Events</button>
+                <table id="device-events" class="table table-striped" style="max-height: 50vh;overflow: auto">
+                    <thead>
+                    <th>&nbsp;</th>
+                    <th>Event Time(UTC)</th>
+                    <th>Device ID</th>
+                    <th>Model ID</th>
+                    <th>Event Type</th>
+                    <th>Event Source</th>
+                    </thead>
+                    <tbody id="device-event-details"></ tbody >
+                </table>
+            </div>
+        </div>
+    </fieldset>
+
+    <!--------------------------------------------------
+    Modal Dialog to create a new device
+    --------------------------------------------------->
+    <div class="modal fade" id="ModalCreateDevice" role="dialog" style="">
+        <div class="modal-dialog err-pop">
+            <div class="modal-content" id="NewDeviceModal">
+                <div class="modal-header">
+                    <strong>Add a Device to IoT Hub</strong>
+                </div>
+                <div class="modal-body">
+                    <textares>A case-sensitive string (up to 128 characters long) of alphanumeric characters plus certain special characters.</textares>
+                    <br>
+                    <textares>- . + % _ # * ? ! ( ) , : = &amp; $ '</textares>
+                </div>
+                <div class="modal-body">
+                    @using (Html.BeginForm("AddIoTHubDevice", "IoTHubDps", FormMethod.Post, new { @id = "NewDeviceForm" }))
+                    {
+                        @Html.TextBoxFor(m => Model.newDeviceId, new
+                        {
+                            @class = "form-control input-md",
+                            @id = "newDeviceId",
+                            placeholder = "Enter new device ID",
+                            Required = "required"
+                        })
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btnAddIoTHubDevice" style="max-width:30%;min-width:120px;padding:3.5px;"><i class="fas fa-plus"></i>Add</button>
+                    <button type="button" style="max-width:30%;min-width:120px;padding:3.5px;" data-dismiss="modal"><i class="fas fa-times"></i>Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--------------------------------------------------
+    Modal Dialog to create a new individual enrollment
+    --------------------------------------------------->
+    <div class="modal fade" id="ModalCreateDpsEnrollment" role="dialog">
+        <div class="modal-dialog err-pop">
+            <div class="modal-content" id="NewDpsEnrollmentModal">
+                <div class="modal-header">
+                    <strong>Add a new individual enrollment</strong>
+                </div>
+                <div class="modal-body">
+                    <textares>A case-sensitive string (up to 128 characters long) of alphanumeric characters plus certain special characters.</textares>
+                    <br>
+                    <textares>- . + % _ # * ? ! ( ) , : = &amp; $ '</textares>
+                </div>
+                <div class="modal-body" style="font-size:0.8em">
+                    <textares>*Currently only Symmetric Key attestation is supported.</textares>
+                </div>
+                <div class="modal-body">
+                    @using (Html.BeginForm("AddEnrollment", "IoTHubDps", FormMethod.Post, new { @id = "NewEnrollmentForm" }))
+                    {
+                        @Html.TextBoxFor(m => Model.registrationId, new
+                        {
+                            @class = "form-control input-md",
+                            @id = "newRegistrationId",
+                            placeholder = "Enter new Registration ID",
+                            Required = "required"
+                        })
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btnAddDpsEnrollment" style="max-width:30%;min-width:120px;padding:3.5px;"><i class="fas fa-plus"></i>Add</button>
+                    <button type="button" style="max-width:30%;min-width:120px;padding:3.5px;" data-dismiss="modal"><i class="fas fa-times"></i>Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--------------------------------------------------
+    Modal Dialog to display Device Twin
+    --------------------------------------------------->
+    <div class="modal fade" id="ModalDeviceTwin" role="dialog">
+        <div class="modal-dialog err-pop" style="width:50vw;min-width:640px;">
+            <div class="modal-content" id="DeviceTwinModal">
+                <div class="modal-header">
+                    <strong>Device Twin</strong>
+                </div>
+                <div class="modal-body">
+                    <pre><code id="DeviceTwinContent" style="font-size:1.5rem"></code></pre>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" style="max-width:30%;min-width:120px;padding:3.5px;" data-dismiss="modal"><i class="fas fa-times"></i>Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--------------------------------------------------
+    Modal Dialog to display Device Twin
+    --------------------------------------------------->
+    <div class="modal fade" id="ModalSendCommand" role="dialog">
+        <div class="modal-dialog err-pop" style="width:50vw;min-width:640px;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <strong>Send Command</strong>
+                </div>
+                <div class="modal-body" id="commandModal">
+                    @*<table id="commandTable" width="100%">
+                            <tr>
+                                <th width="30%">Command Name</th>
+                                <th width="30%">Command</th>
+                                <th width="30%">Parameter</th>
+                                <th></th>
+                            </tr>
+                        </table>*@
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="DivClose" style="width:45%;padding:3.5px;" data-dismiss="modal"><i class="fas fa-times"></i>Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!--------------------------------------------------
+Script block to update Telemetry/Events grid
+--------------------------------------------------->
+<script id="event-template" type="text/x-handlebars-template">
+    <tr data-toggle="collapse" data-target="#event-{{eventId}}" class="accordian-toggle">
+        <td>
+            <button class="btn btn-primary btn-xs">
+                <i class="fas fa-angle-double-down"></i>
+            </button>
+        </td>
+        <td>{{eventTime}}</td>
+        <td>{{eventDeviceId}}</td>
+        <td>{{eventModelId}}</td>
+        <td>{{eventSource}}</td>
+        <td>{{eventType}}</td>
+    </tr>
+    <tr class="hiddenRow collapse" id="event-{{eventId}}">
+        <td colspan="12">
+            <div class="accordian-body">
+                <pre><code class="nohighlight">{{eventData}}</code></pre>
+            </div>
+        </td>
+    </tr>
+</script>
+
+@section scripts
+{
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0/handlebars.js"></script>
+    <script type="text/javascript">
+
+        var hubConnection;
+        var deviceConnectionString = "";
+        var deviceKeyPrimary = "";
+        var deviceKeySecondary = "";
+        var deviceTwinString = "";
+        var enrollmentKeyPrimary = "";
+        var enrollmentKeySecondary = "";
+
+        var tsiToken = "";
+        var tsiClient
+        var lineChart = null;
+        var statesetId = '@ViewData["statesetId"]';
+        var tilesetId = '@ViewData["tilesetId"]';
+        //
+        // Initialization on page load
+        //
+        var initialize = function () {
+
+            // Initialize Authentication for TSI
+            getTsiToken();
+
+            tsiClient = new TsiClient();
+
+            // Initialize Azure Map
+            var map = new atlas.Map('map-id', {
+                center: [-122.139192, 47.647472],
+                zoom: 19,
+                language: 'en-US',
+                showLogo: false,
+                renderWorldCopies: true,
+                view: "Auto",
+                showBuildingModels: true,
+                showFeedbackLink: false,
+                style: "satellite_road_labels",
+                authOptions: {
+                    authType: 'subscriptionKey',
+                    subscriptionKey: `@ViewData["mapKey"]`
+                }
+            });
+
+            if (statesetId.length > 0 && tilesetId.length > 0) {
+
+                console.log("state set %s", statesetId);
+                console.log("tile set %s", tilesetId);
+                const levelControl = new atlas.control.LevelControl({
+                    position: "top-left",
+                });
+
+                const indoorManager = new atlas.indoor.IndoorManager(map, {
+                    levelControl, //level picker
+                    tilesetId : tilesetId,
+                    statesetId : statesetId, //optional
+                });
+
+                indoorManager.setDynamicStyling(true);
+
+                map.events.add("levelchanged", indoorManager, (eventData) => {
+                    //put code that runs after a level has been changed
+                    console.log("The level has changed:", eventData);
+                });
+                map.events.add("facilitychanged", indoorManager, (eventData) => {
+                    //put code that runs after a facility has been changed
+                    console.log("The facility has changed:", eventData);
+                });
+
+                map.events.add("click", function (e) {
+                    var features = map.layers.getRenderedShapes(e.position, "indoor");
+                    var result = features.reduce(function (ids, feature) {
+                        if (feature.layer.id == "indoor_unit_office") {
+                            console.log(feature);
+                        }
+                    },
+                    []);
+                });
+            }
+
+            map.controls.add([
+                new atlas.control.ZoomControl(),
+                new atlas.control.CompassControl(),
+                new atlas.control.PitchControl(),
+                new atlas.control.StyleControl()
+            ], {
+                position: "top-left"
+            });
+
+            var clearEvents = document.getElementById('clear-events');
+                clearEvents.addEventListener('click', function () {
+                    clearEventData();
+            });
+
+            // SignalR
+            hubConnection = new signalR.HubConnectionBuilder()
+                .withUrl("telemetryhub")
+                .configureLogging(signalR.LogLevel.Information)
+                .build();
+
+            hubConnection.start().catch(err => console.error(err.toString()));
+
+            hubConnection.on('SignalRTest', function (payload) {
+                alert("SignalR Test : " + JSON.stringify(payload));
+            });
+
+            hubConnection.on('DeviceTelemetry', function (payload) {
+                var jsonData = JSON.parse(payload);
+                addEvent(jsonData.eventId, jsonData.eventType, jsonData.deviceId, jsonData.dtDataSchema, jsonData.eventSource, jsonData.eventTime, jsonData.data);
+            });
+
+            hubConnection.on('DeviceTwinChange', function (payload) {
+                var jsonData = JSON.parse(payload)
+                addEvent(jsonData.eventId, jsonData.eventType, jsonData.deviceId, jsonData.dtDataSchema, jsonData.eventSource, jsonData.eventTime, jsonData.data);
+            });
+
+            hubConnection.on('DigitalTwinChange', function (payload) {
+                var jsonData = JSON.parse(payload)
+                addEvent(jsonData.eventId, jsonData.eventType, jsonData.deviceId, jsonData.dtDataSchema, jsonData.eventSource, jsonData.eventTime, jsonData.data);
+            });
+
+            hubConnection.on('DeviceLifecycle', function (payload) {
+                var jsonData = JSON.parse(payload)
+                addEvent(jsonData.eventId, jsonData.eventType, jsonData.deviceId, jsonData.dtDataSchema, jsonData.eventSource, jsonData.eventTime, jsonData.data);
+                console.log("DeviceLifecycle " + jsonData.eventSource);
+            });
+
+            hubConnection.on('EventGrid', function (payload) {
+                var jsonData = JSON.parse(payload)
+                addEvent(jsonData.eventId, jsonData.eventType, jsonData.deviceId, jsonData.dtDataSchema, jsonData.eventSource, jsonData.eventTime, jsonData.data);
+                console.log("Event Grid " + jsonData.eventSource);
+                if (jsonData.eventSource == 'Microsoft.Devices.DeviceCreated') {
+                    console.log("Device Added");
+                    var newOption = "<option value='" + jsonData.deviceId + "'>" + jsonData.deviceId + "</option>";
+                    $(newOption).insertAfter($("#DeviceList option:last"));
+                    //$("#DeviceList").val(jsonData.deviceId);
+                }
+                else if (jsonData.eventSource == 'Microsoft.Devices.DeviceDeleted') {
+                    console.log("Device Removed");
+                }
+            });
+
+            enableDisableDeviceButtons(true);
+            enableDisableEnrollmentButtons(true);
+        };
+
+        //
+        // On Navbar
+        //
+        //
+        // Device Information sidenav
+        //
+        $("#btnIoTHubConnectionStringCopy").click(function () {
+            console.log("IoTHub Connection String : " + deviceKeyPrimary);
+            navigator.clipboard.writeText(deviceConnectionString);
+        })
+
+        $("#btnIoTHubPrimaryKeyCopy").click(function () {
+            console.log("IoTHub Primary Key : " + deviceKeyPrimary);
+            navigator.clipboard.writeText(deviceKeyPrimary);
+        })
+
+        $("#btnIoTHubSecondaryKeyCopy").click(function () {
+            console.log("IoT Hub Secondary Key : " + deviceKeySecondary);
+            navigator.clipboard.writeText(deviceKeySecondary);
+        })
+
+        //
+        // Device Information sidenav
+        //
+        // Retrieve and display Device Twin
+        $("#btnShowDeviceTwin").click(function () {
+            var targetDeviceId = $("#DeviceList option:selected").text();
+
+            if (targetDeviceId.length > 0) {
+                console.log("Getting Device Twin for : " + deviceConnectionString);
+
+                $.ajax({
+                type: "GET",
+                    url: '@Url.Action("GetDeviceTwin", "IoTHubDps")',
+                    data: { deviceId: targetDeviceId},
+                    success: function (response) {
+                        document.getElementById('DeviceTwinContent').innerHTML = response;
+                        $('#ModalDeviceTwin').modal('show');
+                    },
+                    error: function(req, status, error) {
+                        alert("Error " + status);
+                    }
+                });
+            };
+        })
+
+        //
+        // Retrieves Device Command and display a dialog
+        // To Do : Cleanup
+        $("#btnShowDeviceCommand").click(function () {
+            var deviceModelId = $("#deviceModelId").text();
+            console.log("Get Command for : " + deviceModelId);
+            var commandJson = getDeviceCommand(deviceModelId)
+            console.log("Get Command Response : " + JSON.stringify(commandJson));
+            //var commands = JSON.json(commandJson);
+
+            //for (var i = 0; i < Object.keys(commands).length; i++) {
+            //    console.log(commands[i].CommanName);
+            //}
+        })
+
+        // Display a dialog to add a new device to IoT Hub
+        $("#btnShowAddIoTHubDevicePopup").click(function () {
+            $('#ModalCreateDevice').modal('show');
+        })
+
+        // Deletes an IoT device from IoT Hub
+        $('#btnDeleteIoTHubDevice').click(function () {
+            var targetDeviceId = $("#DeviceList option:selected").text();
+
+            if (targetDeviceId.length > 0) {
+
+                console.log("Deleting device : " + targetDeviceId);
+
+                $.ajax({
+                    type: "DELETE",
+                    url: '@Url.Action("DeleteIoTHubDevice", "IoTHubDps")',
+                    data: { deviceId: targetDeviceId },
+                    success: function (response) {
+                        $("#DeviceList option:selected").remove();
+                        enableDisableDeviceButtons(true);
+                        clearDeviceInfo();
+                    },
+                    error: function (req, status, error) {
+                        alert("Error " + status);
+                    }
+                });
+            }
+        });
+
+        //
+        // Device Provisioning sidenav
+        //
+        $("#btnDpsIdScopeCopy").click(function () {
+            console.log("Dps ID Scope : " + enrollmentKeyPrimary);
+            navigator.clipboard.writeText(`@ViewData["DpsIdScope"]`);
+        })
+
+        $("#btnDpsPrimaryKeyCopy").click(function () {
+            console.log("Dps Primary Key : " + enrollmentKeyPrimary);
+            navigator.clipboard.writeText(enrollmentKeyPrimary);
+        })
+
+        $("#btnDpsSecondaryKeyCopy").click(function () {
+            console.log("Dps Secondary Key : " + enrollmentKeySeconary);
+            navigator.clipboard.writeText(enrollmentKeySeconary);
+        })
+
+        // Add a new enrollment
+        $("#btnShowAddDpsEnrollmentPopup").click(function () {
+            $('#ModalCreateDpsEnrollment').modal('show');
+        })
+
+        // Delete enrollment
+        $("#btnDeleteDpsEnrollment").click(function () {
+            var registrationId = $("#EnrollmentList option:selected").text();
+
+            if (registrationId.length > 0) {
+                console.log("Deleting enrollment : " + registrationId);
+
+                $.ajax({
+                    type: "DELETE",
+                    url: '@Url.Action("DeleteDpsEnrollment", "IoTHubDps")',
+                    data: { registrationId: registrationId },
+                    success: function (response) {
+                        $("#EnrollmentList option:selected").remove();
+                        enableDisableEnrollmentButtons(true);
+                        clearEnrollmentInfo();
+                    },
+                    error: function (req, status, error) {
+                        alert("Error " + status);
+                    }
+                });
+            }
+        })
+
+        //
+        // Adds a new IoT Device to IoT Hub
+        //
+        $('#btnAddIoTHubDevice').click(function () {
+            var newDevice = $('#newDeviceId').val();
+
+            if (newDevice.length > 0) {
+                console.log("Add IoT Hub device " + newDevice);
+                $.ajax({
+                    type: "POST",
+                    url: '@Url.Action("AddIoTHubDevice", "IoTHubDps")',
+                    data: { deviceId: newDevice },
+                    success: function(response) {
+                        var newOption = "<option value='" + newDevice + "'>" + newDevice + "</option>";
+                        $(newOption).insertBefore($("#DeviceList option:last"));
+                        $("#DeviceList").val(newDevice);
+                        getDeviceInfo(newDevice);
+                    },
+                    error: function(req, status, error) {
+                        alert("Error " + status);
+                    }
+                });
+                $('#ModalCreateDevice').modal('hide');
+            };
+        });
+
+        //
+        // Adds a new individual enrollment to DPS
+        //
+        $('#btnAddDpsEnrollment').click(function () {
+            var newRegId = $('#newRegistrationId').val();
+
+            if (newRegId.length > 0) {
+                console.log("Adding DPS Enrollment " + newRegId);
+                $.ajax({
+                    type: "POST",
+                    url: '@Url.Action("AddDpsEnrollment", "IoTHubDps")',
+                    data: { newRegistrationId: newRegId },
+                    success: function (response) {
+                        var newOption = "<option value='" + newRegId + "'>" + newRegId + "</option>";
+                        $(newOption).insertBefore($("#EnrollmentList option:last"));
+                        $("#EnrollmentList").val(newRegId);
+                        getEnrollmentInfo(newRegId);
+                        enableDisableEnrollmentButtons(false);
+                    },
+                    error: function(req, status, error) {
+                        alert("Error " + status);
+                    }
+                });
+                $('#ModalCreateDpsEnrollment').modal('hide');
+            };
+        });
+
+        // Refresh TSI Chart
+        $("#btnRefreshTsi").click(function () {
+            var targetDeviceId = $("#DeviceList option:selected").text();
+            runTsqPnP(targetDeviceId)
+        })
+
+        //
+        // User selected a device
+        //
+        $('#DeviceList').change(function () {
+            var targetDeviceId = $("#DeviceList option:selected").text();
+            if (targetDeviceId.length > 0) {
+                console.log("device selected " + targetDeviceId);
+                getDeviceInfo(targetDeviceId);
+                //runTsqPnP(targetDeviceId);
+            } else {
+                enableDisableDeviceButtons(true);
+                clearDeviceInfo();
+            }
+        });
+
+        //
+        // User selected an enrollment
+        //
+        $('#EnrollmentList').change(function () {
+            var registrationid = $("#EnrollmentList option:selected").text();
+            if (registrationid.length > 0) {
+                getEnrollmentInfo(registrationid);
+                enableDisableEnrollmentButtons(false);
+            }
+        });
+
+        //
+        // User selected telemetry
+        //
+        $('#telemetryList').change(function () {
+            var targetDeviceId = $("#DeviceList option:selected").text();
+            console.log("telemetryList change " + targetDeviceId);
+            runTsqPnP(targetDeviceId)
+        });
+
+        //
+        // Gets device information.  Connection String, Model ID, Primary/Secondary Keys, and connect/disconnect status
+        //
+        var getDeviceInfo = function (deviceId) {
+            $.ajax({
+                type: "GET",
+                url: '@Url.Action("GetIoTHubDevice", "IoTHubDps")',
+                data: { deviceId: deviceId },
+                success: function (response) {
+                    document.getElementById('deviceConnectionString').innerHTML = response.connectionState;
+                    if (response.connectionState == "Disconnected") {
+                        document.getElementById('deviceConnectionString').style.color = 'Red';
+                    }
+                    else {
+                        document.getElementById('deviceConnectionString').style.color = 'Blue';
+                    }
+                    document.getElementById('deviceState').innerHTML = response.status;
+                    if (response.connectionState == "Disabled") {
+                        document.getElementById('deviceState').style.color = 'Red';
+                    }
+                    else {
+                        document.getElementById('deviceState').style.color = 'Blue';
+                    }
+                    deviceKeyPrimary = response.primaryKey;
+                    deviceKeySecondary = response.secondaryKey;
+                    deviceConnectionString = "HostName=" + '@ViewData["IoTHubName"]' + ";DeviceId=" + response.deviceId + ";SharedAccessKey=" + response.primaryKey;
+                    document.getElementById('deviceModelId').innerHTML = response.deviceModelId;
+                    deviceTwinString = response;
+
+                    //console.log(response);
+                    var json = JSON.stringify(response);
+                    json = JSON.parse(json);
+
+                    var select = document.getElementById("telemetryList");
+                    select.innerText = "";
+                    var options = [];
+
+                    for (var i = 0; i < Object.keys(json.telemetry).length; i++) {
+                        console.log("Telemetry : " + JSON.stringify(json.telemetry[i]));
+                        var option = document.createElement('option');
+                        option.text = json.telemetry[i].telemetryDisplayName + " (" + json.telemetry[i].unit + ")  ";
+                        option.value = json.telemetry[i].telemetryName + ";" + json.telemetry[i].dataType;
+                        options.push(option.outerHTML);
+                    }
+
+                    select.insertAdjacentHTML('beforeEnd', options.join('\n'));
+                    enableDisableDeviceButtons(false);
+                    runTsqPnP(deviceId);
+                    return true;
+                },
+                error: function (req, status, error) {
+                    alert("Error " + status);
+                    return false;
+                }
+            });
+        }
+
+        //
+        // Get enrollment info
+        //
+        var getEnrollmentInfo = function (registrationId) {
+            console.log("Getting enrollment " + enrollment);
+            getEnrollmentInfo(enrollment);
+            enableDisableEnrollmentButtons(false);
+        }
+
+        //
+        // Gets enrollment information.  Status and keys
+        //
+        var getEnrollmentInfo = function (registrationId) {
+            $.ajax({
+                type: "GET",
+                url: '@Url.Action("GetDpsEnrollment", "IoTHubDps")',
+                data: { registrationId: registrationId },
+                success: function (response) {
+                    console.log(response)
+                    document.getElementById("enrollmentStatus").innerHTML = response.status;
+                    enrollmentKeyPrimary = response.primaryKey;
+                    enrollmentKeySeconary = response.secondaryKey;
+                    return true;
+                },
+                error: function (req, status, error) {
+                    alert("Error " + status);
+                    return false;
+                }
+            });
+        }
+
+        //
+        // Enable/disable buttons based on device selection
+        //
+        var enableDisableDeviceButtons = function (disableButton) {
+
+            document.getElementById("btnDeleteIoTHubDevice").disabled = disableButton;
+
+            if (disableButton == false && deviceConnectionString.length > 0) {
+                document.getElementById("btnIoTHubConnectionStringCopy").disabled = disableButton;
+                document.getElementById("btnIoTHubPrimaryKeyCopy").disabled = disableButton;
+                document.getElementById("btnIoTHubSecondaryKeyCopy").disabled = disableButton;
+                document.getElementById("btnShowDeviceCommand").disabled = disableButton;
+            } else {
+                document.getElementById("btnIoTHubConnectionStringCopy").disabled = disableButton;
+                document.getElementById("btnIoTHubPrimaryKeyCopy").disabled = disableButton;
+                document.getElementById("btnIoTHubSecondaryKeyCopy").disabled = disableButton;
+                document.getElementById("btnShowDeviceCommand").disabled = disableButton;
+            }
+            document.getElementById("btnShowDeviceTwin").disabled = disableButton;
+        }
+
+        //
+        // Clears UI components when a device is de-selected
+        //
+        var clearDeviceInfo = function () {
+            document.getElementById('deviceConnectionString').innerHTML = "&nbsp;"
+            document.getElementById('deviceState').innerHTML = "&nbsp;"
+            document.getElementById('deviceModelId').innerHTML = "&nbsp;"
+            deviceKeyPrimary = ""
+            deviceKeySecondary = ""
+            deviceConnectionString = "";
+        }
+
+        //
+        // Enable/disable buttons based on enrollment selection
+        //
+        var enableDisableEnrollmentButtons = function (disableButton) {
+            document.getElementById("btnDeleteDpsEnrollment").disabled = disableButton;
+            document.getElementById("btnDpsIdScopeCopy").disabled = disableButton;
+            document.getElementById("btnDpsPrimaryKeyCopy").disabled = disableButton;
+            document.getElementById("btnDpsSecondaryKeyCopy").disabled = disableButton;
+        }
+
+        //
+        // Clears UI components when a device is de-selected
+        //
+        var clearEnrollmentInfo = function () {
+            document.getElementById('enrollmentStatus').innerHTML = "&nbsp;"
+        }
+
+        //
+        // Clears device events (messages and events)
+        //
+        var clearEventData = function () {
+            $("#device-events").find("tr:gt(0)").remove();
+            $("#device-events").hide();
+        }
+
+        //
+        // Adds device events to the table
+        //
+        var addEvent = function (id, type, deviceId, deviceModelId, source, time, data) {
+            var dataObj = JSON.parse(data);
+            var context = {
+                eventTime: time,
+                eventDeviceId: deviceId,
+                eventModelId: deviceModelId,
+                eventType: type,
+                eventSource: source,
+                eventId: id,
+                eventData: JSON.stringify(dataObj, undefined, 2)
+            };
+            var source = document.getElementById('event-template').innerHTML;
+            var template = Handlebars.compile(source);
+            var html = template(context);
+
+            $("#device-events").show();
+            $('#device-event-details').prepend(html);
+        }
+
+        //
+        // Functions for TSI
+        //
+
+        //
+        // Gets a token for TSI access
+        //
+        var getTsiToken = function () {
+            //console.log("Getting TSI Token");
+            document.getElementById('tsiNonPnP').style.display = 'none';
+            $.ajax({
+                type: "GET",
+                url: '@Url.Action("GetTsiToken", "Tsi")',
+                success: function (response) {
+                    tsiToken = response.toString();
+                    //console.log("GetTsiToken : " + tsiToken);
+                    if (tsiToken.length == 0) {
+                        document.getElementById('tsiChart').style.display = "none";
+                    } else {
+                        document.getElementById('tsiChart').style.display = "block";
+                    }
+                },
+                error: function(req, status, error) {
+                    alert("GetTsiToken Error " + status);
+                    tsiToken = "";
+                    document.getElementById('tsiChart').style.display = "none";
+                }
+            });
+        }
+
+        var runTsqPnP = function (deviceId) {
+
+            // console.log("Running TSQ for " + deviceId);
+
+            // make sure this is IoT Plug and Play device
+            var deviceModelId = $("#deviceModelId").text();
+
+            if (deviceModelId.startsWith("dtmi:") == false) {
+                document.getElementById('tsiNonPnP').style.display = "block";
+                document.getElementById('tsiLineChart').style.display = "none";
+                return;
+            }
+            else {
+                document.getElementById('tsiNonPnP').style.display = "none";
+                document.getElementById('tsiLineChart').style.display = "block";
+            }
+
+            linechart = null;
+            // create aggregate expressions, they are S1/S2 SKU query objects
+            var linechartTsqExpressions = [];
+            var telemetryText  = $("#telemetryList option:selected").text();
+            var telemetryValue = $("#telemetryList option:selected").val();
+
+            if (telemetryValue == null) {
+                return;
+            }
+
+            var telemetryName = telemetryValue.split(";")[0]
+            var telemetryUnit = telemetryValue.split(";")[1]
+            var dataName = '$event.' + telemetryName + '.' + telemetryUnit
+
+            console.log("runTsqPnP data name" + dataName);
+
+
+            var endDate = new Date();
+            var startDate = new Date(endDate.valueOf() - 1000 * 60 * 10);
+
+            //https://github.com/microsoft/tsiclient/blob/b19d9f0078c8ed3104b9d664f05551664a5ae602/docs/UX.md#chart-options
+
+            linechartTsqExpressions.push(new tsiClient.ux.TsqExpression(
+                { timeSeriesId: [deviceId] }, // instance json
+                {
+                    Telemetry_Data: {
+                        kind: 'numeric',
+                        value: { tsx: dataName },
+                        filter: null,
+                        aggregation: { tsx: 'avg($value)' }
+                    }
+                },
+                { from: startDate, to: endDate, bucketSize: '10S' }, // search span
+                { color: 'Red', alias: telemetryText, includeDots: true, includeEnvelope: true }
+            ));
+
+            getTsiToken();
+
+            if (tsiToken.length > 0) {
+
+                tsiClient.server.getTsqResults(tsiToken, `@ViewData["tsiUri"]`, linechartTsqExpressions.map(function (ae) { return ae.toTsq() })).then(function (result) {
+
+                    var transformedResult = tsiClient.ux.transformTsqResultsForVisualization(result, linechartTsqExpressions);
+
+                    //Create the line chart.
+                    if (lineChart == null) {
+                        lineChart = new tsiClient.ux.LineChart(document.getElementById('tsiLineChart'));
+                    }
+
+                    lineChart.render(transformedResult, {
+                        dataType: 'numeric', theme: 'dark', grid: true, tooltip: true, legend: 'compact', offset: 'Local',
+                    }, linechartTsqExpressions);
+                });
+            }
+        };
+
+        //
+        // Sends request to server to retrieve the list of commands based on device model
+        //
+        var getDeviceCommand = function (modelid) {
+            $.ajax({
+                type: "GET",
+                url: '@Url.Action("GetCommand", "IoTHubDps")',
+                data: { modelid: modelid },
+                success: function (response) {
+                    var json = JSON.stringify(response);
+                    console.log("Get Command : " + json);
+                    console.log("Get Length : " + response.length);
+                    //var table = document.getElementById("commandTable");
+                    var commandModal = document.getElementById('commandModal');
+
+                    console.log("Command Modal " + commandModal);
+
+                    while (commandModal.firstChild) {
+                        commandModal.removeChild(commandModal.firstChild);
+                    }
+                    //while (table.rows.length > 1) {
+                    //    table.deleteRow(table.rows.length - 1);
+                    //}
+
+                    for (var i = 0; i < response.length; i++) {
+                        console.log("Command : " + response[i].commandName);
+
+                        var fieldSet = document.createElement("fieldset");
+                        var legend = document.createElement("legend");
+                        var divDesc = document.createElement("div");
+                        var divCmd = document.createElement("div");
+                        var divParam = document.createElement("div");
+                        var paramInput = document.createElement("input");
+
+                        console.log("obj %o", response[i].commandDisplayName);
+                        if (response[i].commandDisplayName == null) {
+                            legend.innerHTML = response[i].commandName;
+                        } else {
+                            legend.innerHTML = response[i].commandDisplayName;
+                        }
+
+                        fieldSet.appendChild(legend);
+
+                        divDesc.innerHTML = response[i].commandDescription;
+                        fieldSet.appendChild(divDesc);
+
+                        divCmd.setAttribute('id', i + '-command');
+                        divCmd.setAttribute('value', response[i].commandName);
+                        divCmd.innerHTML = 'Command Name : ' + response[i].commandName;
+                        fieldSet.appendChild(divCmd);
+
+                        divParam.setAttribute('id', i + '-param');
+                        divParam.setAttribute('value', response[i].requestName);
+                        divParam.innerHTML = 'Command Parameter : ' + response[i].requestName + ' (' + response[i].requestKind + ')';
+                        fieldSet.appendChild(divParam);
+
+                        paramInput.id = i + '-input';
+                        fieldSet.appendChild(paramInput);
+
+                        var button = document.createElement('input');
+                        button.setAttribute('id', i + '-btn');
+                        button.setAttribute('type', 'button');
+                        button.setAttribute('value', 'Run Command');
+                        button.setAttribute('onclick', 'RunCommand("' + i + '")');
+                        fieldSet.appendChild(button);
+
+                        commandModal.appendChild(fieldSet);
+
+                        //var row = table.insertRow(table.rows.length);
+                        //var cell1 = row.insertCell(0);
+                        //var cell2 = row.insertCell(1);
+                        //var cell3 = row.insertCell(2);
+                        //var cell4 = row.insertCell(3);
+
+                        //cell1.innerHTML = response[i].commandDisplayName;
+                        //cell2.innerHTML = response[i].commandName;
+                        //var paramInput = document.createElement("input");
+                        //paramInput.id = "param" + response[i].commandName;
+                        //cell3.appendChild(paramInput);
+                    }
+
+                    $('#ModalSendCommand').modal('show');
+
+                    return true;
+                },
+                error: function (req, status, error) {
+                    alert("Error " + status);
+                    return false;
+                }
+            });
+        }
+
+        //
+        // Send command
+        //
+        var sendCommand = function (deviceid, command, payload) {
+
+            $.ajax({
+                type: "POST",
+                url: '@Url.Action("SendCommand", "IoTHubDps")',
+                data: { deviceid: deviceid, command: command, payload: payload },
+                success: function (response) {
+                },
+                error: function (req, status, error) {
+                    alert("Error " + status);
+                    return false;
+                }
+            });
+        }
+
+        //
+        // An event handler for buttons dynamically created for commands
+        //
+        function RunCommand(id) {
+            var cmd = document.getElementById(id + '-command').getAttribute("value");
+            var targetDeviceId = $("#DeviceList option:selected").text();
+            var param = document.getElementById(id + '-param').getAttribute("value");
+            var input = document.getElementById(id + '-input').value;
+            var payload = `{'${param}':'${input}'}`;
+            console.log("RunCommand " + id);
+            console.log("RunCommand cmd     : " + cmd);
+            console.log("RunCommand target  : " + targetDeviceId);
+            console.log("RunCommand payload : " + payload);
+
+            var regex = new RegExp("^(-?)P(?=\\d|T\\d)(?:(\\d+)Y)?(?:(\\d+)M)?(?:(\\d+)([DW]))?(?:T(?:(\\d+)H)?(?:(\\d+)M)?(?:(\\d+(?:\\.\\d+)?)S)?)?$")
+            if (!regex.test(input)) {
+                alert("Invalid");
+                return false;
+            }
+
+            sendCommand(targetDeviceId, cmd, payload);
+        }
+    </script>
+}
