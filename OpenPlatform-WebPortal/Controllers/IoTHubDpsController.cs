@@ -107,18 +107,18 @@ namespace OpenPlatform_WebPortal.Controllers
                 if (!string.IsNullOrEmpty(dtmiContent))
                 {
                     /*
-                     *モデルパーサーの初期化
+                     * Initialize Model Parser
                      */
                     ModelParser parser = new ModelParser();
                     parser.DtmiResolver = DtmiResolver;
 
                     /*
-                     * モデルパーサーで解決させる
+                     * Resolve IoT Plug and Play Model
                      */
                     var parsedDtmis = await parser.ParseAsync(new List<string> { dtmiContent });
 
                     /*
-                     * テレメトリーのみ抽出
+                     * Pick up telemetry
                      * */
                     var interfaces = parsedDtmis.Where(r => r.Value.EntityKind == DTEntityKind.Telemetry).ToList();
                     foreach (var dt in interfaces)
