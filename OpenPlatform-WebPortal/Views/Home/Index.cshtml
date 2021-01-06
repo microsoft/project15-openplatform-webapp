@@ -377,7 +377,7 @@ Main Page
                     <textares>*Currently only Symmetric Key attestation is supported.</textares>
                 </div>
                 <div class="modal-body">
-                    @using (Html.BeginForm("AddEnrollment", "IoTHubDps", FormMethod.Post, new { @id = "NewEnrollmentForm" }))
+                    @using (Html.BeginForm("AddDpsEnrollment", "IoTHubDps", FormMethod.Post, new { @id = "NewEnrollmentForm" }))
                     {
                         @Html.TextBoxFor(m => Model.registrationId, new
                         {
