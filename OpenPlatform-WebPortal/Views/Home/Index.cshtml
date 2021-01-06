@@ -881,8 +881,6 @@ Script block to update Telemetry/Events grid
                     deviceConnectionString = "HostName=" + '@ViewData["IoTHubName"]' + ";DeviceId=" + response.deviceId + ";SharedAccessKey=" + response.primaryKey;
                     document.getElementById('deviceModelId').innerHTML = response.deviceModelId;
 
-                    console.log("Device Model ID " + response.deviceModelId);
-
                     if (response.deviceModelId) {
                         document.getElementById('telemetryList').style.display = 'inline';
                         document.getElementById('telemetryName').style.display = 'none';
@@ -891,12 +889,11 @@ Script block to update Telemetry/Events grid
                         document.getElementById('telemetryList').style.display = 'none';
                         document.getElementById('telemetryName').style.display = 'inline';
                         document.getElementById('telemetryDataType').style.display = 'inline';
-                        
                     }
 
                     deviceTwinString = response;
-
                     //console.log(response);
+
                     var json = JSON.stringify(response);
                     json = JSON.parse(json);
 
@@ -1112,7 +1109,6 @@ Script block to update Telemetry/Events grid
             var dataName = '$event.' + telemetryName + '.' + telemetryUnit
 
             console.log("runTsqPnP data name : " + dataName);
-
 
             var endDate = new Date();
             var startDate = new Date(endDate.valueOf() - 1000 * 60 * 10);
