@@ -292,10 +292,15 @@ Main Page
         <div style="min-width: 1024px; width: inherit; margin-bottom:5px;">
             <label style="font-weight:400">Select Telemetry</label>
             <select id="telemetryList" name="telemetryList" style="padding-left:5px;min-width:10em;height:2.0em"></select>
+            <input type="text" id="telemetryName" placeholder="Enter name of telemetry" style="padding-left: 5px; min-width: 10em; height: 2.0em;display:none">
+            <select id="telemetryDataType" style="padding-left: 5px; min-width: 10em; height: 2.0em;display:none">
+                <option>Double</option>
+                <option>Long</option>
+            </select>
         </div>
         <div id="tsiNonPnP" style="display: none; text-align:left; position:relative;top:30%;z-index:1;color:red;">
             <div id="tsiNonPnPMsg">Non IoT Plug and Play Device.</div>
-            <div>Requires cusomization.</div>
+            <div>Please specify telemetry name and data type.  *case sensitive</div>
         </div>
         <div id="tsiChart" style="min-width: 1024px; width: inherit;">
             <div id="tsiLineChart" style="position:relative;width: 100%;height:calc(30vh - 2em); margin: 0px;"></div>
@@ -875,6 +880,20 @@ Script block to update Telemetry/Events grid
                     deviceKeySecondary = response.secondaryKey;
                     deviceConnectionString = "HostName=" + '@ViewData["IoTHubName"]' + ";DeviceId=" + response.deviceId + ";SharedAccessKey=" + response.primaryKey;
                     document.getElementById('deviceModelId').innerHTML = response.deviceModelId;
+
+                    console.log("Device Model ID " + response.deviceModelId);
+
+                    if (response.deviceModelId) {
+                        document.getElementById('telemetryList').style.display = 'inline';
+                        document.getElementById('telemetryName').style.display = 'none';
+                        document.getElementById('telemetryDataType').style.display = 'none';
+                    } else {
+                        document.getElementById('telemetryList').style.display = 'none';
+                        document.getElementById('telemetryName').style.display = 'inline';
+                        document.getElementById('telemetryDataType').style.display = 'inline';
+                        
+                    }
+
                     deviceTwinString = response;
 
                     //console.log(response);
@@ -1052,32 +1071,47 @@ Script block to update Telemetry/Events grid
 
             // make sure this is IoT Plug and Play device
             var deviceModelId = $("#deviceModelId").text();
+            var telemetryText = "";
+            var telemetryValue = "";
+            var telemetryName = "";
+            var telemetryUnit = "";
 
             if (deviceModelId.startsWith("dtmi:") == false) {
-                document.getElementById('tsiNonPnP').style.display = "block";
-                document.getElementById('tsiLineChart').style.display = "none";
-                return;
+                if (document.getElementById('telemetryName').value.length > 0 && document.getElementById('telemetryDataType').value.length > 0) {
+                    document.getElementById('tsiNonPnP').style.display = "none";
+                    document.getElementById('tsiLineChart').style.display = "block";
+                    telemetryText = document.getElementById('telemetryName').value;
+                    telemetryName = document.getElementById('telemetryName').value;
+                    telemetryUnit = $("#telemetryDataType option:selected").text();
+//                    telemetryUnit = document.getElementById('telemetryDataType').value;
+                }
+                else
+                {
+                    document.getElementById('tsiNonPnP').style.display = "block";
+                    document.getElementById('tsiLineChart').style.display = "none";
+                    return;
+                }
             }
             else {
                 document.getElementById('tsiNonPnP').style.display = "none";
                 document.getElementById('tsiLineChart').style.display = "block";
+                telemetryText = $("#telemetryList option:selected").text();
+                telemetryValue = $("#telemetryList option:selected").val();
+                telemetryName = telemetryValue.split(";")[0]
+                telemetryUnit = telemetryValue.split(";")[1]
             }
 
             linechart = null;
             // create aggregate expressions, they are S1/S2 SKU query objects
             var linechartTsqExpressions = [];
-            var telemetryText  = $("#telemetryList option:selected").text();
-            var telemetryValue = $("#telemetryList option:selected").val();
 
             if (telemetryValue == null) {
                 return;
             }
 
-            var telemetryName = telemetryValue.split(";")[0]
-            var telemetryUnit = telemetryValue.split(";")[1]
             var dataName = '$event.' + telemetryName + '.' + telemetryUnit
 
-            console.log("runTsqPnP data name" + dataName);
+            console.log("runTsqPnP data name : " + dataName);
 
 
             var endDate = new Date();
