@@ -1162,8 +1162,10 @@ Script block to update Telemetry/Events grid
                 document.getElementById('tsiLineChart').style.display = "block";
                 telemetryText = $("#telemetryList option:selected").text();
                 telemetryValue = $("#telemetryList option:selected").val();
-                telemetryName = telemetryValue.split(";")[0]
-                telemetryUnit = telemetryValue.split(";")[1]
+                if (telemetryValue) {
+                    telemetryName = telemetryValue.split(";")[0]
+                    telemetryUnit = telemetryValue.split(";")[1]
+                }
             }
 
             linechart = null;
