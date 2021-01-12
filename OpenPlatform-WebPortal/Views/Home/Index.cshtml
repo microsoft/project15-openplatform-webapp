@@ -275,6 +275,12 @@ Main Page
     --------------------------------------------------->
     <fieldset>
         <legend><strong>Azure Map</strong></legend>
+        <div id="locationLegend" style="width:inherit;overflow-x:scroll; white-space:nowrap;display:inline">
+            &nbsp;
+        </div>
+        <div id="txtCoordinates" style="width:inherit;overflow-x:scroll; white-space:nowrap;display:inline">
+            &nbsp;
+        </div>
         <div style="width:auto;overflow:auto;">
             <div id="map-id" style="width:100%;min-width: 1024px; min-height: 480px; width: inherit; height: 30vh;"></div>
         </div>
@@ -492,8 +498,16 @@ Script block to update Telemetry/Events grid
         var tsiToken = "";
         var tsiClient
         var lineChart = null;
+
+        var map;
         var statesetId = '@ViewData["statesetId"]';
         var tilesetId = '@ViewData["tilesetId"]';
+        var hasLocation = false;
+        var locationDataName = "";
+        var mapDatasource;
+        var userShape;
+        var userPosition;
+
         //
         // Initialization on page load
         //
@@ -505,7 +519,7 @@ Script block to update Telemetry/Events grid
             tsiClient = new TsiClient();
 
             // Initialize Azure Map
-            var map = new atlas.Map('map-id', {
+            map = new atlas.Map('map-id', {
                 center: [-122.139192, 47.647472],
                 zoom: 19,
                 language: 'en-US',
@@ -520,6 +534,10 @@ Script block to update Telemetry/Events grid
                     subscriptionKey: `@ViewData["mapKey"]`
                 }
             });
+
+            map.events.add('ready', function () {
+                mapDatasource = new atlas.source.DataSource();
+            })
 
             if (statesetId.length > 0 && tilesetId.length > 0) {
 
@@ -585,6 +603,36 @@ Script block to update Telemetry/Events grid
 
             hubConnection.on('DeviceTelemetry', function (payload) {
                 var jsonData = JSON.parse(payload);
+                var telemetryJson = JSON.parse(jsonData.data);
+
+                if (hasLocation) {
+                    if (locationDataName in telemetryJson) {
+                        if (telemetryJson[locationDataName].type == "point") {
+                            //console.log("Test LNG " + telemetryJson[locationDataName].coordinates[0]);
+                            //console.log("Test LAT " + telemetryJson[locationDataName].coordinates[1]);
+
+                            var lng = parseFloat(telemetryJson[locationDataName].coordinates[0]);
+                            var lat = parseFloat(telemetryJson[locationDataName].coordinates[1]);
+                            var txtCoordinates = telemetryJson[locationDataName].coordinates[0] + "," + telemetryJson[locationDataName].coordinates[1];
+
+                            if (document.getElementById('txtCoordinates').innerHTML != txtCoordinates) {
+
+                                marker = new atlas.HtmlMarker({
+                                    htmlContent: '<div class="pulseIcon"></div>',
+                                    position: [lng, lat]
+                                });
+
+                                map.markers.add(marker);
+
+                                map.setCamera({
+                                    center: [lng, lat]
+                                });
+
+                                document.getElementById('txtCoordinates').innerHTML = txtCoordinates;
+                            }
+                        }
+                    }
+                }
                 addEvent(jsonData.eventId, jsonData.eventType, jsonData.deviceId, jsonData.dtDataSchema, jsonData.eventSource, jsonData.eventTime, jsonData.data);
             });
 
@@ -771,18 +819,18 @@ Script block to update Telemetry/Events grid
                     type: "POST",
                     url: '@Url.Action("AddIoTHubDevice", "IoTHubDps")',
                     data: { deviceId: newDevice },
-                    success: function(response) {
-                        var newOption = "<option value='" + newDevice + "'>" + newDevice + "</option>";
-                        $(newOption).insertBefore($("#DeviceList option:last"));
-                        $("#DeviceList").val(newDevice);
+                    success: function (response) {
+                        //var newOption = "<option value='" + newDevice + "'>" + newDevice + "</option>";
+                        //$(newOption).insertBefore($("#DeviceList option:last"));
+                        //$("#DeviceList").val(newDevice);
                         getDeviceInfo(newDevice);
                     },
-                    error: function(req, status, error) {
+                    error: function (req, status, error) {
                         alert("Error " + status);
                     }
                 });
                 $('#ModalCreateDevice').modal('hide');
-            };
+            }
         });
 
         //
@@ -829,7 +877,7 @@ Script block to update Telemetry/Events grid
                 //runTsqPnP(targetDeviceId);
             } else {
                 enableDisableDeviceButtons(true);
-                clearDeviceInfo();
+                UpdateLocationInfo("", "&nbsp;", "&nbsp;");
             }
         });
 
@@ -853,6 +901,15 @@ Script block to update Telemetry/Events grid
             runTsqPnP(targetDeviceId)
         });
 
+        var UpdateLocationInfo = function (dataName, displayName, coordinates) {
+            locationDataName = dataName;
+            document.getElementById('locationLegend').innerHTML = displayName;
+            document.getElementById('txtCoordinates').innerHTML = coordinates;
+            if (dataName.length == 0) {
+                map.markers.clear();
+            }
+        }
+
         //
         // Gets device information.  Connection String, Model ID, Primary/Secondary Keys, and connect/disconnect status
         //
@@ -862,6 +919,9 @@ Script block to update Telemetry/Events grid
                 url: '@Url.Action("GetIoTHubDevice", "IoTHubDps")',
                 data: { deviceId: deviceId },
                 success: function (response) {
+                    UpdateLocationInfo("", "&nbsp;", "&nbsp;");
+                    hasLocation = false;
+
                     document.getElementById('deviceConnectionString').innerHTML = response.connectionState;
                     if (response.connectionState == "Disconnected") {
                         document.getElementById('deviceConnectionString').style.color = 'Red';
@@ -892,7 +952,7 @@ Script block to update Telemetry/Events grid
                     }
 
                     deviceTwinString = response;
-                    //console.log(response);
+                    console.log(response);
 
                     var json = JSON.stringify(response);
                     json = JSON.parse(json);
@@ -902,11 +962,19 @@ Script block to update Telemetry/Events grid
                     var options = [];
 
                     for (var i = 0; i < Object.keys(json.telemetry).length; i++) {
-                        console.log("Telemetry : " + JSON.stringify(json.telemetry[i]));
-                        var option = document.createElement('option');
-                        option.text = json.telemetry[i].telemetryDisplayName + " (" + json.telemetry[i].unit + ")  ";
-                        option.value = json.telemetry[i].telemetryName + ";" + json.telemetry[i].dataType;
-                        options.push(option.outerHTML);
+                        // console.log("Telemetry : " + JSON.stringify(json.telemetry[i]));
+
+                        var telemetryType = json.telemetry[i].telemetryType;
+                        if (telemetryType != null && telemetryType.includes("geospatial")) {
+                            UpdateLocationInfo(json.telemetry[i].telemetryName, json.telemetry[i].telemetryDisplayName, "&nbsp;");
+                            hasLocation = true;
+                        }
+                        else {
+                            var option = document.createElement('option');
+                            option.text = json.telemetry[i].telemetryDisplayName + " (" + json.telemetry[i].unit + ")  ";
+                            option.value = json.telemetry[i].telemetryName + ";" + json.telemetry[i].dataType;
+                            options.push(option.outerHTML);
+                        }
                     }
 
                     select.insertAdjacentHTML('beforeEnd', options.join('\n'));
