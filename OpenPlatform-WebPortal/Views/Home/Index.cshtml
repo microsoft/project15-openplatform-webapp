@@ -738,6 +738,10 @@ Script block to update Telemetry/Events grid
             $('#ModalCreateDevice').modal('show');
         })
 
+        $('#ModalCreateDevice').on('shown.bs.modal', function (e) {
+            $('#newDeviceId').focus();
+        });
+
         // Deletes an IoT device from IoT Hub
         $('#btnDeleteIoTHubDevice').click(function () {
             var targetDeviceId = $("#DeviceList option:selected").text();
@@ -784,6 +788,10 @@ Script block to update Telemetry/Events grid
         $("#btnShowAddDpsEnrollmentPopup").click(function () {
             $('#ModalCreateDpsEnrollment').modal('show');
         })
+
+        $('#ModalCreateDpsEnrollment').on('shown.bs.modal', function (e) {
+            $('#newRegistrationId').focus();
+        });
 
         // Delete enrollment
         $("#btnDeleteDpsEnrollment").click(function () {
