@@ -43,6 +43,7 @@ namespace OpenPlatform_WebPortal.Models
     {
         public string IdScope { get; set; }
         public string ConnectionString { get; set; }
+        public string WebHookUrl { get; set; }
     }
 
     public class AppSettings

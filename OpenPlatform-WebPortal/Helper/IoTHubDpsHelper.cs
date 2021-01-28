@@ -40,6 +40,7 @@ namespace OpenPlatform_WebPortal.Helper
         private readonly ServiceClient _serviceClient;
         private readonly DigitalTwinClient _digitalTwinClient;
         private readonly ProvisioningServiceClient _provisioningServiceClient;
+        private readonly string _dps_webhookUrl;
 
         public IoTHubDpsHelper(IOptions<AppSettings> config, ILogger<IoTHubDpsHelper> logger)
         {
@@ -49,6 +50,7 @@ namespace OpenPlatform_WebPortal.Helper
             _serviceClient = ServiceClient.CreateFromConnectionString(_appSettings.IoTHub.ConnectionString);
             _digitalTwinClient = DigitalTwinClient.CreateFromConnectionString(_appSettings.IoTHub.ConnectionString);
             _provisioningServiceClient = ProvisioningServiceClient.CreateFromConnectionString(_appSettings.Dps.ConnectionString);
+            _dps_webhookUrl = _appSettings.Dps.WebHookUrl;
             _deviceClient = null;
             _isConnected = false;
         }
@@ -283,6 +285,11 @@ namespace OpenPlatform_WebPortal.Helper
                 Attestation attestation = new SymmetricKeyAttestation(primaryKey, secondaryKey);
                 IndividualEnrollment individualEnrollment = new IndividualEnrollment(newRegistrationId, attestation);
                 individualEnrollment.DeviceId = newRegistrationId;
+                if (!string.IsNullOrEmpty(_dps_webhookUrl))
+                {
+                    individualEnrollment.CustomAllocationDefinition = new CustomAllocationDefinition() { WebhookUrl = _dps_webhookUrl, ApiVersion = "2019-03-31" };
+                    individualEnrollment.AllocationPolicy = AllocationPolicy.Custom;
+                }
                 var newEnrollment = await _provisioningServiceClient.CreateOrUpdateIndividualEnrollmentAsync(individualEnrollment).ConfigureAwait(false);
 
                 bCreated = true;
