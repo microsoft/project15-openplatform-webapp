@@ -638,13 +638,13 @@ Script block to update Telemetry/Events grid
                                 console.log("DeviceTelemetry Location : " + txtCoordinatesDiv.innerHTML);
 
                                 if (txtCoordinatesDiv.innerHTML == "&nbsp;") {
-                                    btnLocation.disabled = true;
+                                    btnLocation.disabled = false;
                                     map.setCamera({
                                         center: [lng, lat],
                                         zoom: 13
                                     });
                                 } else {
-                                    btnLocation.disabled = false;
+                                    btnLocation.disabled = true;
                                 }
 
                                 txtCoordinatesDiv.innerHTML = txtCoordinates;
