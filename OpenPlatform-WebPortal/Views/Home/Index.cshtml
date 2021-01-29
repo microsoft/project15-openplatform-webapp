@@ -635,18 +635,16 @@ Script block to update Telemetry/Events grid
                                 var txtCoordinatesDiv = document.getElementById('txtCoordinates');
                                 var btnLocation = document.getElementById('btnLocationLegend');
 
-                                console.log("DeviceTelemetry Location : " + txtCoordinatesDiv.innerHTML);
+                                //console.log("DeviceTelemetry Location : " + txtCoordinatesDiv.innerHTML);
 
                                 if (txtCoordinatesDiv.innerHTML == "&nbsp;") {
-                                    btnLocation.disabled = false;
                                     map.setCamera({
                                         center: [lng, lat],
                                         zoom: 13
                                     });
-                                } else {
-                                    btnLocation.disabled = true;
                                 }
 
+                                btnLocation.disabled = (txtCoordinates == "&nbsp;");
                                 txtCoordinatesDiv.innerHTML = txtCoordinates;
                             }
                         }
