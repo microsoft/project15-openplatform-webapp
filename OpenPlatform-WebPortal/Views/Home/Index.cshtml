@@ -1319,9 +1319,7 @@ Script block to update Telemetry/Events grid
                         var divDesc = document.createElement("div");
                         var divCmd = document.createElement("div");
                         var divParam = document.createElement("div");
-                        var paramInput = document.createElement("input");
 
-                        console.log("obj %o", response[i].commandDisplayName);
                         if (response[i].commandDisplayName == null) {
                             legend.innerHTML = response[i].commandName;
                         } else {
@@ -1334,18 +1332,31 @@ Script block to update Telemetry/Events grid
                         fieldSet.appendChild(divDesc);
 
                         divCmd.setAttribute('id', i + '-command');
-                        divCmd.setAttribute('value', response[i].commandName);
+                        divCmd.setAttribute('value', response[i].commandName.toString());
                         divCmd.innerHTML = 'Command Name : ' + response[i].commandName;
                         fieldSet.appendChild(divCmd);
 
-                        divParam.setAttribute('id', i + '-param');
-                        divParam.setAttribute('value', response[i].requestName);
-                        divParam.innerHTML = 'Command Parameter : ' + response[i].requestName + ' (' + response[i].requestKind + ')';
+                        divParam.innerHTML = "Command Parameters";
+
                         fieldSet.appendChild(divParam);
 
-                        paramInput.id = i + '-input';
-                        fieldSet.appendChild(paramInput);
+                        var fieldParam = document.createElement("fieldset");
+                        fieldParam.setAttribute('id', 'fieldParam')
+                        for (var j = 0; j < response[i].request.length; j++) {
+                            var divRequest = document.createElement("div");
+                            var paramInput = document.createElement("input");
 
+                            fieldParam.setAttribute('style', 'margin:0 0 5px 0');
+                            divRequest.setAttribute('id', j + '-param');
+                            divRequest.setAttribute('value', response[i].request[j].requestName.toString());
+                            divRequest.innerHTML = response[i].request[j].requestName + ' (' + response[i].request[j].requestKind + ')';
+                            paramInput.id = j + '-input';
+                            paramInput.setAttribute('style', 'margin-left:0.5em')
+                            divRequest.appendChild(paramInput);
+                            fieldParam.appendChild(divRequest);
+                        }
+
+                        fieldSet.appendChild(fieldParam);
                         var button = document.createElement('input');
                         button.setAttribute('id', i + '-btn');
                         button.setAttribute('type', 'button');
@@ -1403,21 +1414,25 @@ Script block to update Telemetry/Events grid
         function RunCommand(id) {
             var cmd = document.getElementById(id + '-command').getAttribute("value");
             var targetDeviceId = $("#DeviceList option:selected").text();
-            var param = document.getElementById(id + '-param').getAttribute("value");
-            var input = document.getElementById(id + '-input').value;
-            var payload = `{'${param}':'${input}'}`;
-            console.log("RunCommand " + id);
-            console.log("RunCommand cmd     : " + cmd);
-            console.log("RunCommand target  : " + targetDeviceId);
-            console.log("RunCommand payload : " + payload);
 
-            var regex = new RegExp("^(-?)P(?=\\d|T\\d)(?:(\\d+)Y)?(?:(\\d+)M)?(?:(\\d+)([DW]))?(?:T(?:(\\d+)H)?(?:(\\d+)M)?(?:(\\d+(?:\\.\\d+)?)S)?)?$")
-            if (!regex.test(input)) {
-                alert("Invalid");
-                return false;
+            var fieldParam = document.getElementById("fieldParam");
+            var payload = "";
+            console.log("fieldParam " + fieldParam.children.length);
+
+            for (i = 0; i < fieldParam.children.length; i++) {
+                var paramDiv = document.getElementById(i + '-param');
+                var inputValue = document.getElementById(i + '-input').value;
+                console.log("Child Node Name " + paramDiv.getAttribute("value"));
+
+                if (i > 0) {
+                    payload = payload + ',';
+                }
+                payload = payload + `${paramDiv.getAttribute("value")}':'${inputValue}`;
             }
 
-            sendCommand(targetDeviceId, cmd, payload);
+            var payloads = `{'${payload}'}`;
+            console.log("Payloads " + payloads);
+            sendCommand(targetDeviceId, cmd, payloads);
         }
     </script>
 }

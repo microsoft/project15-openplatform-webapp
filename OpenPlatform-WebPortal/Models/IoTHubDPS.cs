@@ -15,7 +15,13 @@ namespace OpenPlatform_WebPortal.Models
             public string unit { get; set; }
             public string dataType { get; set; }
         }
-
+        public class COMMAND_REQUEST
+        {
+            public string requestName { get; set; }
+            public string requestisplayName { get; set; }
+            public string requestDescription { get; set; }
+            public string requestKind { get; set; }
+        }
         public class COMMAND_DATA
         {
             public string CommandName { get; set; }
@@ -23,9 +29,7 @@ namespace OpenPlatform_WebPortal.Models
 
             public string CommandDescription { get; set; }
 
-            public string requestName { get; set; }
-
-            public string requestKind { get; set; }
+            public List<COMMAND_REQUEST> request { get; set; }
         }
         public class DEVICE_DATA
         {

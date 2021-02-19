@@ -16,6 +16,9 @@ using Newtonsoft.Json.Linq;
 using OpenPlatform_WebPortal.Helper;
 using OpenPlatform_WebPortal.Models;
 using static OpenPlatform_WebPortal.Models.IoTHubDPS;
+using System.IO;
+using Microsoft.AspNetCore.Http;
+using System.Text;
 
 namespace OpenPlatform_WebPortal.Controllers
 {
@@ -28,18 +31,13 @@ namespace OpenPlatform_WebPortal.Controllers
         private string _modelRepoUrl;
         private IIoTHubDpsHelper _helper;
 
-        public IoTHubDpsController(IIoTHubDpsHelper helper, IOptions<AppSettings> optionsAccessor)
+        public IoTHubDpsController(IIoTHubDpsHelper helper, IOptions<AppSettings> optionsAccessor, ILogger<IoTHubDpsController> logger)
         {
             _helper = helper;
             _appSettings = optionsAccessor.Value;
             _gitToken = _appSettings.GitHub.token;
             _modelRepoUrl = _appSettings.ModelRepository.repoUrl;
-        }
-
-        private IoTHubDpsController(IIoTHubDpsHelper helper, IOptions<AppSettings> optionsAccessor, ILogger<IoTHubDpsController> logger)
-        {
             _logger = logger;
-            _appSettings = optionsAccessor.Value;
         }
 
         public IActionResult Index()
@@ -94,108 +92,99 @@ namespace OpenPlatform_WebPortal.Controllers
                 deviceData.deviceModelId = twin.ModelId;
 
                 // Resolve Device Model
-                var dtmiContent = string.Empty;
-                try
-                {
-                    dtmiContent = await Resolve(deviceData.deviceModelId);
-                }
-                catch
-                {
-                    return Json(deviceData);
-                }
+                DTDLModelResolver resolver = new DTDLModelResolver(_modelRepoUrl, _gitToken, _logger);
 
-                if (!string.IsNullOrEmpty(dtmiContent))
-                {
-                    /*
-                     * Initialize Model Parser
-                     */
-                    ModelParser parser = new ModelParser();
-                    parser.DtmiResolver = DtmiResolver;
+                var modelData = await resolver.ParseModelAsync(deviceData.deviceModelId);
 
-                    /*
-                     * Resolve IoT Plug and Play Model
-                     */
-                    var parsedDtmis = await parser.ParseAsync(new List<string> { dtmiContent });
-
-                    /*
-                     * Pick up telemetry
-                     * */
-                    var interfaces = parsedDtmis.Where(r => r.Value.EntityKind == DTEntityKind.Telemetry).ToList();
-                    foreach (var dt in interfaces)
+                if (modelData != null)
+                { 
+                    try
                     {
-                        TELEMETRY_DATA data = new TELEMETRY_DATA();
-                        DTTelemetryInfo telemetryInfo = dt.Value as DTTelemetryInfo;
-
-                        switch (telemetryInfo.Schema.EntityKind)
+                        /*
+                         * Pick up telemetry
+                         * */
+                        var interfaces = modelData.Where(r => r.Value.EntityKind == DTEntityKind.Telemetry).ToList();
+                        foreach (var dt in interfaces)
                         {
-                            case DTEntityKind.Integer:
-                            case DTEntityKind.Long:
-                                // for TSI in WebUI
-                                data.dataType = "Long";
-                                break;
-                            case DTEntityKind.Double:
-                            case DTEntityKind.Float:
-                                // for TSI in WebUI
-                                data.dataType = "Double";
-                                break;
-                            case DTEntityKind.Object:
-                                // for now we support point object for location
+                            TELEMETRY_DATA data = new TELEMETRY_DATA();
+                            DTTelemetryInfo telemetryInfo = dt.Value as DTTelemetryInfo;
 
-                                if (telemetryInfo.Schema.Id.Versionless.Equals("dtmi:standard:schema:geospatial:point"))
-                                {
-                                    data.TelemetryType = telemetryInfo.Schema.Id.Versionless;
+                            switch (telemetryInfo.Schema.EntityKind)
+                            {
+                                case DTEntityKind.Integer:
+                                case DTEntityKind.Long:
+                                    // for TSI in WebUI
+                                    data.dataType = "Long";
                                     break;
-                                }
-                                continue;
+                                case DTEntityKind.Double:
+                                case DTEntityKind.Float:
+                                    // for TSI in WebUI
+                                    data.dataType = "Double";
+                                    break;
+                                case DTEntityKind.Object:
+                                    // for now we support point object for location
 
-                            default:
-                                continue;
-                        }
+                                    if (telemetryInfo.Schema.Id.Versionless.Equals("dtmi:standard:schema:geospatial:point"))
+                                    {
+                                        data.TelemetryType = telemetryInfo.Schema.Id.Versionless;
+                                        break;
+                                    }
+                                    continue;
 
-                        if (telemetryInfo.SupplementalTypes.Count > 0)
-                        {
-                            foreach (var supplementalType in telemetryInfo.SupplementalTypes)
-                            {
-                                data.TelemetryType = supplementalType.Versionless;
+                                default:
+                                    continue;
                             }
-                        }
 
-                        if (telemetryInfo.DisplayName.Count > 0)
-                        {
-                            data.TelemetryDisplayName = telemetryInfo.DisplayName["en"];
-                        }
-
-                        if (telemetryInfo.SupplementalProperties.Count > 0)
-                        {
-                            if (telemetryInfo.SupplementalProperties.ContainsKey("unit"))
+                            if (telemetryInfo.SupplementalTypes.Count > 0)
                             {
-                                DTUnitInfo unitInfo = telemetryInfo.SupplementalProperties["unit"] as DTUnitInfo;
-                                data.unit = unitInfo.Symbol;
-                            }
-                        }
-                        else
-                        {
-                            // No Unit
-                            if (deviceData.deviceModelId.StartsWith("dtmi:seeedkk:wioterminal:wioterminal_co2checker"))
-                            {
-                                if (telemetryInfo.Name.Equals("co2"))
+                                foreach (var supplementalType in telemetryInfo.SupplementalTypes)
                                 {
-                                    data.unit = "PPM";
-                                }
-                                else if (telemetryInfo.Name.Equals("humi"))
-                                {
-                                    data.unit = "%";
-                                }
-                                else if (telemetryInfo.Name.Equals("wbgt"))
-                                {
-                                    data.unit = "°C";
+                                    data.TelemetryType = supplementalType.Versionless;
                                 }
                             }
-                        }
 
-                        data.TelemetryName = telemetryInfo.Name;
-                        deviceData.telemetry.Add(data);
+                            if (telemetryInfo.DisplayName.Count > 0)
+                            {
+                                data.TelemetryDisplayName = telemetryInfo.DisplayName["en"];
+                            }
+
+                            if (telemetryInfo.SupplementalProperties.Count > 0)
+                            {
+                                if (telemetryInfo.SupplementalProperties.ContainsKey("unit"))
+                                {
+                                    DTUnitInfo unitInfo = telemetryInfo.SupplementalProperties["unit"] as DTUnitInfo;
+                                    data.unit = unitInfo.Symbol;
+                                }
+                            }
+                            else
+                            {
+                                // No Unit
+                                if (deviceData.deviceModelId.StartsWith("dtmi:seeedkk:wioterminal:wioterminal_co2checker"))
+                                {
+                                    if (telemetryInfo.Name.Equals("co2"))
+                                    {
+                                        data.unit = "PPM";
+                                    }
+                                    else if (telemetryInfo.Name.Equals("humi"))
+                                    {
+                                        data.unit = "%";
+                                    }
+                                    else if (telemetryInfo.Name.Equals("wbgt"))
+                                    {
+                                        data.unit = "°C";
+                                    }
+                                }
+                            }
+
+                            data.TelemetryName = telemetryInfo.Name;
+                            deviceData.telemetry.Add(data);
+                        }
                     }
+                    catch (Exception e)
+                    {
+                        _logger.LogError($"Exception in ParseAsync() : {e.Message}");
+                    }
+
                 }
             }
             return Json(deviceData);
@@ -295,103 +284,6 @@ namespace OpenPlatform_WebPortal.Controllers
             return await _helper.DeleteDpsEnrollment(registrationId);
         }
         #endregion // DPS
-        /*************************************************************
-        * DTDL model resolution
-        *************************************************************/
-        #region DTDL
-        private async Task<string> Resolve(string dtmi)
-        {
-            if (string.IsNullOrEmpty(dtmi))
-            {
-                return string.Empty;
-            }
-
-            // Apply model repository convention
-            string dtmiPath = DtmiToPath(dtmi.ToString());
-
-            if (string.IsNullOrEmpty(dtmiPath))
-            {
-                _logger.LogWarning($"Invalid DTMI: {dtmi}");
-                return await Task.FromResult<string>(string.Empty);
-            }
-
-            string modelContent = string.Empty;
-
-            // if private repo is provided, resolve model with private repo first.
-            if (!string.IsNullOrEmpty(_modelRepoUrl))
-            {
-                modelContent = getModelContent(_modelRepoUrl, dtmiPath, _gitToken);
-            }
-
-            if (string.IsNullOrEmpty(modelContent))
-            {
-                modelContent = getModelContent("https://devicemodels.azure.com", dtmiPath, string.Empty);
-            }
-
-            return modelContent;
-        }
-
-        public async Task<IEnumerable<string>> DtmiResolver(IReadOnlyCollection<Dtmi> dtmis)
-        {
-            List<String> jsonLds = new List<string>();
-            var wc = new WebClient();
-
-            foreach (var dtmi in dtmis)
-            {
-                Console.WriteLine("Resolver looking for. " + dtmi);
-                string model = dtmi.OriginalString.Replace(":", "/");
-                model = (model.Replace(";", "-")).ToLower();
-                if (!String.IsNullOrWhiteSpace(model))
-                {
-                    var dtmiContent = await Resolve(dtmi.OriginalString);
-                    jsonLds.Add(dtmiContent);
-                }
-            }
-            return jsonLds;
-        }
-
-        private string getModelContent(string repoUrl, string dtmiPath, string gitToken)
-        {
-            string modelContent = string.Empty;
-            WebClient wc = new WebClient();
-            Uri modelRepoUrl = new Uri(repoUrl);
-            Uri fullPath = new Uri($"{modelRepoUrl}{dtmiPath}");
-            string fullyQualifiedPath = fullPath.ToString();
-
-            if (!string.IsNullOrEmpty(gitToken))
-            {
-                var token = $"token {gitToken}";
-                wc.Headers.Add("Authorization", token);
-            }
-
-            try
-            {
-                modelContent = wc.DownloadString(fullyQualifiedPath);
-            }
-            catch (System.Net.WebException e)
-            {
-                _logger.LogError($"Exception in getModelContent() : {e.Message}");
-            }
-
-            return modelContent;
-        }
-
-        private static bool IsValidDtmi(string dtmi)
-        {
-            // Regex defined at https://github.com/Azure/digital-twin-model-identifier#validation-regular-expressions
-            Regex rx = new Regex(@"^dtmi:[A-Za-z](?:[A-Za-z0-9_]*[A-Za-z0-9])?(?::[A-Za-z](?:[A-Za-z0-9_]*[A-Za-z0-9])?)*;[1-9][0-9]{0,8}$");
-            return rx.IsMatch(dtmi);
-        }
-
-        private static string DtmiToPath(string dtmi)
-        {
-            if (!IsValidDtmi(dtmi))
-            {
-                return null;
-            }
-            // dtmi:com:example:Thermostat;1 -> dtmi/com/example/thermostat-1.json
-            return $"/{dtmi.ToLowerInvariant().Replace(":", "/").Replace(";", "-")}.json";
-        }
 
         [HttpGet]
         public async Task<ActionResult> GetCommand(string modelid)
@@ -400,42 +292,45 @@ namespace OpenPlatform_WebPortal.Controllers
 
             try
             {
-                var dtmiContent = await Resolve(modelid);
+                DTDLModelResolver resolver = new DTDLModelResolver(_modelRepoUrl, _gitToken, _logger);
 
-                if (!string.IsNullOrEmpty(dtmiContent))
+                var modelData = await resolver.ParseModelAsync(modelid);
+
+                var interfaces = modelData.Where(r => r.Value.EntityKind == DTEntityKind.Command).ToList();
+
+                foreach (var dt in interfaces)
                 {
-                    ModelParser parser = new ModelParser();
-                    parser.DtmiResolver = DtmiResolver;
-                    var parsedDtmis = await parser.ParseAsync(new List<string> { dtmiContent });
+                    COMMAND_DATA data = new COMMAND_DATA();
 
-                    var interfaces = parsedDtmis.Where(r => r.Value.EntityKind == DTEntityKind.Command).ToList();
+                    DTCommandInfo commandInfo = dt.Value as DTCommandInfo;
 
-                    foreach (var dt in interfaces)
+                    if (commandInfo.DisplayName.Count > 0)
                     {
-                        COMMAND_DATA data = new COMMAND_DATA();
-
-                        DTCommandInfo commandInfo = dt.Value as DTCommandInfo;
-
-                        if (commandInfo.DisplayName.Count > 0)
-                        {
-                            data.CommandDisplayName = commandInfo.DisplayName["en"];
-                        }
-
-                        if (commandInfo.Description.Count > 0)
-                        {
-                            data.CommandDescription = commandInfo.Description["en"];
-                        }
-
-                        data.CommandName = commandInfo.Name;
-
-                        if (commandInfo.Request != null)
-                        {
-                            data.requestName = commandInfo.Request.Name;
-                            data.requestKind = commandInfo.Request.Schema.EntityKind.ToString();
-                        }
-
-                        commandData.Add(data);
+                        data.CommandDisplayName = commandInfo.DisplayName["en"];
                     }
+
+                    if (commandInfo.Description.Count > 0)
+                    {
+                        data.CommandDescription = commandInfo.Description["en"];
+                    }
+
+                    data.CommandName = commandInfo.Name;
+
+                    if (commandInfo.Request != null)
+                    {
+                        if (data.request == null)
+                        {
+                            data.request = new List<COMMAND_REQUEST>();
+                        }
+                        COMMAND_REQUEST request = new COMMAND_REQUEST();
+                        request.requestName = commandInfo.Request.Name;
+                        request.requestKind = commandInfo.Request.Schema.EntityKind.ToString();
+                        request.requestDescription = commandInfo.Request.Description["en"];
+                        request.requestisplayName = commandInfo.Request.DisplayName["en"];
+                        data.request.Add(request);
+                }
+
+                    commandData.Add(data);
                 }
             }
             catch (Exception ex)
@@ -461,6 +356,5 @@ namespace OpenPlatform_WebPortal.Controllers
 
             return true;
         }
-        #endregion
     }
 }
