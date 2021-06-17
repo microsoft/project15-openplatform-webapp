@@ -1434,5 +1434,19 @@ Script block to update Telemetry/Events grid
             console.log("Payloads " + payloads);
             sendCommand(targetDeviceId, cmd, payloads);
         }
+
+        $(document).ready(function () {
+            $('NewEnrollmentForm').keypress(function (e) {
+                if ((e.keyCode == 10) || (e.keyCode == 13)) {
+                    e.preventDefault();
+                }
+            });
+
+            $('NewDeviceForm').keypress(function (e) {
+                if ((e.keyCode == 10) || (e.keyCode == 13)) {
+                    e.preventDefault();
+                }
+            });
+        });
     </script>
 }
