@@ -1431,7 +1431,7 @@ Script block to update Telemetry/Events grid
                 if (i > 0) {
                     payload = payload + ',';
                 }
-                payload = payload + `${paramDiv.getAttribute("value")}':'${inputValue}`;
+                payload = payload + `"${paramDiv.getAttribute("value")}":"${inputValue}"`;
             }
 
             var payloads = `{${payload}}`;
