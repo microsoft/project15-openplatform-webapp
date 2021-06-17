@@ -51,6 +51,49 @@ namespace OpenPlatform_WebPortal.Controllers
         // https://docs.microsoft.com/en-us/dotnet/api/microsoft.azure.devices.registrymanager?view=azure-dotnet
         #region IoTHub
 
+        public void ProcessDTObject(DEVICE_DATA deviceData, DTObjectInfo objectInfo, string objectName)
+        {
+            TELEMETRY_DATA data = null;
+
+            foreach (var field in objectInfo.Fields)
+            {
+                switch (field.Schema.EntityKind)
+                {
+                    case DTEntityKind.String:
+                        break;
+                    case DTEntityKind.Object:
+                        ProcessDTObject(deviceData, field.Schema as DTObjectInfo, $"{objectName}.{field.Name}");
+                        break;
+                    case DTEntityKind.Integer:
+                    case DTEntityKind.Long:
+                        // for TSI in WebUI
+                        data = new TELEMETRY_DATA();
+                        data.dataType = "Long";
+                        break;
+                    case DTEntityKind.Double:
+                    case DTEntityKind.Float:
+                        // for TSI in WebUI
+                        data = new TELEMETRY_DATA();
+                        data.dataType = "Double";
+                        break;
+                    default:
+                        break;
+                }
+
+                if (data != null)
+                {
+                    if (field.DisplayName.Count > 0)
+                    {
+                        data.TelemetryDisplayName = $"{objectName}.{field.DisplayName["en"]}";
+                    }
+
+                    data.TelemetryName = $"{objectName}.{field.Name}";
+                    deviceData.telemetry.Add(data);
+                    data = null;
+                }
+            }
+        }
+
         // Retrieve the specified Device object.
         // https://docs.microsoft.com/en-us/dotnet/api/microsoft.azure.devices.registrymanager.getdeviceasync?view=azure-dotnet#Microsoft_Azure_Devices_RegistryManager_GetDeviceAsync_System_String
         //
@@ -91,13 +134,11 @@ namespace OpenPlatform_WebPortal.Controllers
             {
                 deviceData.deviceModelId = twin.ModelId;
 
-                // Resolve Device Model
-                DTDLModelResolver resolver = new DTDLModelResolver(_modelRepoUrl, _gitToken, _logger);
-
+                DeviceModelResolver resolver = new DeviceModelResolver(_modelRepoUrl, _gitToken, _logger);
                 var modelData = await resolver.ParseModelAsync(deviceData.deviceModelId);
 
                 if (modelData != null)
-                { 
+                {
                     try
                     {
                         /*
@@ -128,6 +169,11 @@ namespace OpenPlatform_WebPortal.Controllers
                                     {
                                         data.TelemetryType = telemetryInfo.Schema.Id.Versionless;
                                         break;
+                                    }
+                                    else
+                                    {
+                                        DTObjectInfo objectInfo = telemetryInfo.Schema as DTObjectInfo;
+                                        ProcessDTObject(deviceData, objectInfo, telemetryInfo.Name);
                                     }
                                     continue;
 
@@ -184,7 +230,6 @@ namespace OpenPlatform_WebPortal.Controllers
                     {
                         _logger.LogError($"Exception in ParseAsync() : {e.Message}");
                     }
-
                 }
             }
             return Json(deviceData);
@@ -285,6 +330,7 @@ namespace OpenPlatform_WebPortal.Controllers
         }
         #endregion // DPS
 
+        #region directmethod
         [HttpGet]
         public async Task<ActionResult> GetCommand(string modelid)
         {
@@ -356,5 +402,6 @@ namespace OpenPlatform_WebPortal.Controllers
 
             return true;
         }
+        #endregion
     }
 }
