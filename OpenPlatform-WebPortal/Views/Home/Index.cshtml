@@ -1340,23 +1340,27 @@ Script block to update Telemetry/Events grid
 
                         fieldSet.appendChild(divParam);
 
+                        
                         var fieldParam = document.createElement("fieldset");
                         fieldParam.setAttribute('id', 'fieldParam')
-                        for (var j = 0; j < response[i].request.length; j++) {
-                            var divRequest = document.createElement("div");
-                            var paramInput = document.createElement("input");
 
-                            fieldParam.setAttribute('style', 'margin:0 0 5px 0');
-                            divRequest.setAttribute('id', j + '-param');
-                            divRequest.setAttribute('value', response[i].request[j].requestName.toString());
-                            divRequest.innerHTML = response[i].request[j].requestName + ' (' + response[i].request[j].requestKind + ')';
-                            paramInput.id = j + '-input';
-                            paramInput.setAttribute('style', 'margin-left:0.5em')
-                            divRequest.appendChild(paramInput);
-                            fieldParam.appendChild(divRequest);
+                        if (response[i].request != null) {
+                            for (var j = 0; j < response[i].request.length; j++) {
+                                var divRequest = document.createElement("div");
+                                var paramInput = document.createElement("input");
+
+                                fieldParam.setAttribute('style', 'margin:0 0 5px 0');
+                                divRequest.setAttribute('id', j + '-param');
+                                divRequest.setAttribute('value', response[i].request[j].requestName.toString());
+                                divRequest.innerHTML = response[i].request[j].requestName + ' (' + response[i].request[j].requestKind + ')';
+                                paramInput.id = j + '-input';
+                                paramInput.setAttribute('style', 'margin-left:0.5em')
+                                divRequest.appendChild(paramInput);
+                                fieldParam.appendChild(divRequest);
+                            }
                         }
-
                         fieldSet.appendChild(fieldParam);
+
                         var button = document.createElement('input');
                         button.setAttribute('id', i + '-btn');
                         button.setAttribute('type', 'button');
@@ -1430,7 +1434,7 @@ Script block to update Telemetry/Events grid
                 payload = payload + `${paramDiv.getAttribute("value")}':'${inputValue}`;
             }
 
-            var payloads = `{'${payload}'}`;
+            var payloads = `{${payload}}`;
             console.log("Payloads " + payloads);
             sendCommand(targetDeviceId, cmd, payloads);
         }

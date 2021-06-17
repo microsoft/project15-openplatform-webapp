@@ -48,6 +48,7 @@ namespace OpenPlatform_WebPortal.Helper
         private readonly string _dps_webhookUrl;
         private readonly string _privateModelRepoUrl;
         private readonly string _privateModelToken;
+        private static DeviceModelResolver _resolver = null;
         public IoTHubDpsHelper(IOptions<AppSettings> config, ILogger<IoTHubDpsHelper> logger)
         {
             _logger = logger;
@@ -413,51 +414,69 @@ namespace OpenPlatform_WebPortal.Helper
 
                 if (!string.IsNullOrEmpty(deviceTwin.ModelId))
                 {
-                    DTDLModelResolver resolver = new DTDLModelResolver(_privateModelRepoUrl, _privateModelToken, _logger);
-
-                    var modelData = await resolver.ParseModelAsync(deviceTwin.ModelId);
-
-                    var interfaces = modelData.Where(r => r.Value.EntityKind == DTEntityKind.Command).ToList();
-
-                    //var commands = interfaces.Select(r => r.Value as DTCommandInfo).Where(x => x.Name == command).ToList();
-                    var dtCmd = interfaces.Select(r => r.Value as DTCommandInfo).Single(x => x.Name == command);
-
-                    if (cmdPayload.ContainsKey(dtCmd.Request.Name))
-                    { 
-                        switch (dtCmd.Request.Schema.EntityKind)
+                    try
+                    {
+                        if (_resolver == null)
                         {
-                            case DTEntityKind.String:
-                                methodInvocation.SetPayloadJson(new string(cmdPayload[dtCmd.Request.Name].ToString()));
-                                break;
-
-                            case DTEntityKind.Integer:
-                                if (cmdPayload[dtCmd.Request.Name].Type == JTokenType.String)
-                                {
-                                    var value = cmdPayload[dtCmd.Request.Name].ToString();
-
-                                    // convert to integer
-                                    Regex rx = new Regex(@"^[0-9]+$");
-
-                                    if (!rx.IsMatch(value))
-                                    {
-                                        var result = new CloudToDeviceMethodResult()
-                                        {
-                                            Status = 400,
-                                        };
-                                        return result;
-                                    }
-                                    else
-                                    {
-                                        methodInvocation.SetPayloadJson(Int32.Parse(value).ToString());
-                                    }
-                                }
-                                break;
-
-                            case DTEntityKind.Float:
-                            case DTEntityKind.Double:
-                                break;
+                            _resolver = new DeviceModelResolver(_privateModelRepoUrl, _privateModelToken, _logger);
                         }
-                        //cmdPayload.
+
+                        var modelData = await _resolver.ParseModelAsync(deviceTwin.ModelId);
+
+                        var interfaces = modelData.Where(r => r.Value.EntityKind == DTEntityKind.Command).ToList();
+                        string commandName;
+                        if (command.Contains("*"))
+                        {
+                            commandName = command.Split('*')[1];
+                        }
+                        else
+                        {
+                            commandName = command;
+                        }
+
+                        //var commands = interfaces.Select(r => r.Value as DTCommandInfo).Where(x => x.Name == command).ToList();
+                        var dtCmd = interfaces.Select(r => r.Value as DTCommandInfo).Single(x => x.Name == commandName);
+
+                        if (dtCmd.Request != null && cmdPayload.ContainsKey(dtCmd.Request.Name))
+                        {
+                            switch (dtCmd.Request.Schema.EntityKind)
+                            {
+                                case DTEntityKind.String:
+                                    methodInvocation.SetPayloadJson(new string(cmdPayload[dtCmd.Request.Name].ToString()));
+                                    break;
+
+                                case DTEntityKind.Integer:
+                                    if (cmdPayload[dtCmd.Request.Name].Type == JTokenType.String)
+                                    {
+                                        var value = cmdPayload[dtCmd.Request.Name].ToString();
+
+                                        // convert to integer
+                                        Regex rx = new Regex(@"^[0-9]+$");
+
+                                        if (!rx.IsMatch(value))
+                                        {
+                                            var result = new CloudToDeviceMethodResult()
+                                            {
+                                                Status = 400,
+                                            };
+                                            return result;
+                                        }
+                                        else
+                                        {
+                                            methodInvocation.SetPayloadJson(Int32.Parse(value).ToString());
+                                        }
+                                    }
+                                    break;
+
+                                case DTEntityKind.Float:
+                                case DTEntityKind.Double:
+                                    break;
+                            }
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        _logger.LogError($"Error Resolve(): {e.Message}");
                     }
                 }
 

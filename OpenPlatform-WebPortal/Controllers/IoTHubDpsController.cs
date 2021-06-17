@@ -240,7 +240,11 @@ namespace OpenPlatform_WebPortal.Controllers
         [HttpPost]
         public async Task<bool> AddIoTHubDevice(string deviceId)
         {
-            return await _helper.AddIoTHubDevice(deviceId);
+            if (deviceId != null)
+            {
+                return await _helper.AddIoTHubDevice(deviceId);
+            }
+            return false;
         }
 
         // Deletes a previously registered device from IoT Hub
@@ -330,6 +334,19 @@ namespace OpenPlatform_WebPortal.Controllers
         }
         #endregion // DPS
 
+        private string FindComponentName(IEnumerable<KeyValuePair<Dtmi, DTEntityInfo>> components, DTCommandInfo commandInfo)
+        {
+            foreach (var component in components)
+            {
+                if ((component.Value as DTComponentInfo).Schema.Id == commandInfo.DefinedIn) 
+                {
+                    return (component.Value as DTComponentInfo).Name;
+                }
+            }
+
+            return string.Empty;
+        }
+
         #region directmethod
         [HttpGet]
         public async Task<ActionResult> GetCommand(string modelid)
@@ -338,45 +355,56 @@ namespace OpenPlatform_WebPortal.Controllers
 
             try
             {
-                DTDLModelResolver resolver = new DTDLModelResolver(_modelRepoUrl, _gitToken, _logger);
 
+                DeviceModelResolver resolver = new DeviceModelResolver(_modelRepoUrl, _gitToken, _logger);
                 var modelData = await resolver.ParseModelAsync(modelid);
 
-                var interfaces = modelData.Where(r => r.Value.EntityKind == DTEntityKind.Command).ToList();
-
-                foreach (var dt in interfaces)
+                if (modelData != null)
                 {
-                    COMMAND_DATA data = new COMMAND_DATA();
+                    var components = modelData.Where(r => r.Value.EntityKind == DTEntityKind.Component).ToList();
+                    var commands = modelData.Where(r => r.Value.EntityKind == DTEntityKind.Command).ToList();
 
-                    DTCommandInfo commandInfo = dt.Value as DTCommandInfo;
-
-                    if (commandInfo.DisplayName.Count > 0)
+                    foreach (var command in commands)
                     {
-                        data.CommandDisplayName = commandInfo.DisplayName["en"];
-                    }
+                        COMMAND_DATA data = new COMMAND_DATA();
+                        DTCommandInfo commandInfo = command.Value as DTCommandInfo;
 
-                    if (commandInfo.Description.Count > 0)
-                    {
-                        data.CommandDescription = commandInfo.Description["en"];
-                    }
-
-                    data.CommandName = commandInfo.Name;
-
-                    if (commandInfo.Request != null)
-                    {
-                        if (data.request == null)
+                        if (commandInfo.DisplayName.Count > 0)
                         {
-                            data.request = new List<COMMAND_REQUEST>();
+                            data.CommandDisplayName = commandInfo.DisplayName["en"];
                         }
-                        COMMAND_REQUEST request = new COMMAND_REQUEST();
-                        request.requestName = commandInfo.Request.Name;
-                        request.requestKind = commandInfo.Request.Schema.EntityKind.ToString();
-                        request.requestDescription = commandInfo.Request.Description["en"];
-                        request.requestisplayName = commandInfo.Request.DisplayName["en"];
-                        data.request.Add(request);
-                }
 
-                    commandData.Add(data);
+                        if (commandInfo.Description.Count > 0)
+                        {
+                            data.CommandDescription = commandInfo.Description["en"];
+                        }
+                        var componentName = string.Empty;
+                        componentName = FindComponentName(components, commandInfo);
+
+                        if (string.IsNullOrEmpty(componentName))
+                        {
+                            data.CommandName = commandInfo.Name;
+                        }
+                        else
+                        {
+                            data.CommandName = $"{componentName}*{commandInfo.Name}";
+                        }
+
+                        if ((commandInfo.Request != null) && (commandInfo.Request.Schema.EntityKind != DTEntityKind.Object))
+                        {
+                            if (data.request == null)
+                            {
+                                data.request = new List<COMMAND_REQUEST>();
+                            }
+                            COMMAND_REQUEST request = new COMMAND_REQUEST();
+                            request.requestName = commandInfo.Request.Name;
+                            request.requestKind = commandInfo.Request.Schema.EntityKind.ToString();
+                            request.requestDescription = commandInfo.Request.Description["en"];
+                            request.requestisplayName = commandInfo.Request.DisplayName["en"];
+                            data.request.Add(request);
+                        }
+                        commandData.Add(data);
+                    }
                 }
             }
             catch (Exception ex)
@@ -386,6 +414,7 @@ namespace OpenPlatform_WebPortal.Controllers
 
             return Json(commandData);
         }
+
         // Calls method
         [HttpPost]
         public async Task<bool> SendCommand(string deviceid, string command, string payload)
