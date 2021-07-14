@@ -30,6 +30,7 @@ namespace Portal.Controllers
             HomeView homeView = new HomeView();
             homeView.deviceList = await _helper.GetIoTHubDevices();
             homeView.enrollmentList = await _helper.GetDpsEnrollments();
+            homeView.groupEnrollmentList = await _helper.GetDpsGroupEnrollments();
             ViewData["IoTHubName"] = _helper.GetIoTHubName(_appSettings.IoTHub.ConnectionString);
             ViewData["mapKey"] = _appSettings.AzureMap.MapKey.ToString();
             ViewData["TsiClientId"] = _appSettings.TimeSeriesInsights.clientId.ToString();

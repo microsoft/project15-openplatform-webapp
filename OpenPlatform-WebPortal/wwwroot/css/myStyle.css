@@ -189,7 +189,7 @@ div.itemBody {
     margin-bottom: 5px;
 }
 
-select#DeviceList, select#EnrollmentList, input#newDeviceId, input#newModelId {
+select#deviceList, select#enrollmentList, select#groupEnrollmentList, input#newDeviceId, input#newModelId {
     width: 98%;
     height: 2.0em;
     padding: 0px 5px 0px 5px;
@@ -228,7 +228,7 @@ div.model-footer {
     text-align: center;
 }
 
-input#newDeviceId, input#newModelId {
+input#newDeviceId, input#newModelId, .form-control {
     margin-bottom: 10px;
     font-size: 1em;
 }

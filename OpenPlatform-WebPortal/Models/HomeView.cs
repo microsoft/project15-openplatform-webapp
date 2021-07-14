@@ -12,5 +12,7 @@ namespace OpenPlatform_WebPortal.Models
         public string newDeviceId { get; set; }
         public string registrationId { get; set; }
         public IEnumerable<SelectListItem> enrollmentList { get; set; }
+        public IEnumerable<SelectListItem> groupEnrollmentList { get; set; }
+        public bool isGroup { get; set; }
     }
 }

@@ -21,6 +21,7 @@ namespace OpenPlatform_WebPortal.Models
             public string requestisplayName { get; set; }
             public string requestDescription { get; set; }
             public string requestKind { get; set; }
+            public List<string> enumValues { get; set; }
         }
         public class COMMAND_DATA
         {
@@ -49,7 +50,15 @@ namespace OpenPlatform_WebPortal.Models
             public string registrationId { get; set; }
             public string primaryKey { get; set; }
             public string secondaryKey { get; set; }
+            public string status { get; set; }
+            public bool isGroup { get; set; }
+        }
 
+        public class QR_CODE_DATA
+        {
+            public string groupId { get; set; }
+            public string deviceId { get; set; }
+            public string imageData { get; set; }
             public string status { get; set; }
         }
     }
