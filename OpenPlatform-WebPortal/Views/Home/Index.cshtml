@@ -1168,7 +1168,6 @@ Script block to update Telemetry/Events grid
                         var telemetryType = json.telemetry[i].telemetryType;
                         if (telemetryType != null && (telemetryType.includes("geospatial") || telemetryType.includes("dtmi:iotcentral:class:Location"))) {
                             UpdateLocationInfo(json.telemetry[i].telemetryName, json.telemetry[i].telemetryDisplayName, "&nbsp;");
-                            console.log("Has Location");
                             hasLocation = true;
                         }
                         else {

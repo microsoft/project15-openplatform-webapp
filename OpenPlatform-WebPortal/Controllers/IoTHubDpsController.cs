@@ -651,7 +651,7 @@ namespace OpenPlatform_WebPortal.Controllers
                 _logger.LogError($"Error {ex}");
                 if (ex.InnerException != null)
                 {
-                    return StatusCode(400, new { message = ex.InnerException.Message });
+                    return StatusCode(400, new { message = ex.InnerException.Message.Replace(@"\", "") });
                 }
                 else
                 {
