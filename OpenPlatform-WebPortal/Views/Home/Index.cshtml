@@ -1597,9 +1597,10 @@ Script block to update Telemetry/Events grid
                 url: '@Url.Action("SendCommand", "IoTHubDps")',
                 data: { deviceid: deviceid, command: command, payload: payload },
                 success: function (response) {
+                    alert(" Status: " + response.status + " " + response.message);
                 },
-                error: function (jqXHR) {
-                    alert(" Status: " + jqXHR.status + " " + jqXHR.responseText);
+                error: function (response) {
+                    alert(" Status: " + response.status + " " + response.message);
                     return false;
                 }
             });

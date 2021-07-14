@@ -32,6 +32,13 @@ namespace OpenPlatform_WebPortal.Models
 
             public List<COMMAND_REQUEST> request { get; set; }
         }
+
+        public class COMMAND_RESPONSE
+        {
+            public int status { get; set; }
+            public string message { get; set; }
+        }
+
         public class DEVICE_DATA
         {
             public string deviceId { get; set; }

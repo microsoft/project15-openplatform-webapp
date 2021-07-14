@@ -642,24 +642,31 @@ namespace OpenPlatform_WebPortal.Controllers
         [HttpPost]
         public async Task<ActionResult> SendCommand(string deviceid, string command, string payload)
         {
+            var cmdResponse = new COMMAND_RESPONSE();
+
             try
             {
                 var response = await _helper.SendMethod(deviceid, command, payload);
+                cmdResponse.status = response.Status;
+                cmdResponse.message = response.GetPayloadAsJson();
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error {ex}");
+                cmdResponse.status = 400;
+                
+
                 if (ex.InnerException != null)
                 {
-                    return StatusCode(400, new { message = ex.InnerException.Message.Replace(@"\", "") });
+                    cmdResponse.message = ex.InnerException.Message.Replace(@"\", "");
                 }
                 else
                 {
-                    return StatusCode(400, new { message = ex.Message });
+                    cmdResponse.message = ex.Message;
                 }
             }
 
-            return Ok();
+            return Json(cmdResponse);
         }
         #endregion
     }
