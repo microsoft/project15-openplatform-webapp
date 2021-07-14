@@ -489,6 +489,7 @@ Main Page
                             <a href="https://docs.microsoft.com/azure/iot-fundamentals/iot-phone-app-how-to">Learn more about Phone as a Device</a>
                         </div>
                     </div>
+
                     <fieldset style="height:100%;margin:0;padding-bottom:5px">
 
 
@@ -710,7 +711,7 @@ Script block to update Telemetry/Events grid
                         {
                             lng = parseFloat(telemetryJson[locationDataName].lon);
                             lat = parseFloat(telemetryJson[locationDataName].lat);
-                            txtCoordinates = telemetryJson[locationDataName].lan + "," + telemetryJson[locationDataName].lon;
+                            txtCoordinates = telemetryJson[locationDataName].lat + "," + telemetryJson[locationDataName].lon;
                         }
 
                         if (document.getElementById('txtCoordinates').innerHTML != txtCoordinates) {
